@@ -1,713 +1,284 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>紫色瘋人院的花花</title>
-<style>
-body {
-  font-family: Arial, sans-serif;
-  padding: 20px;
-  display: flex;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>紫色瘋人院</title>
+    <style>
+        :root { --main: #6a5acd; --bg: #f5f5f7; --success: #27ae60; --error: #e74c3c; --dark: #2c3e50; }
+        body { font-family: "Microsoft JhengHei", sans-serif; margin: 0; display: flex; background: var(--bg); color: #333; }
+        
+        /* 頂部管理列 */
+        .admin-bar { position: fixed; top: 0; width: 100%; height: 55px; background: var(--dark); color: white; display: flex; align-items: center; padding: 0 20px; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); box-sizing: border-box; justify-content: space-between; }
+        .admin-bar input { margin: 0 5px; padding: 5px; border-radius: 4px; border: none; width: 90px; }
+        .admin-bar button { background: var(--main); color: white; border: none; padding: 6px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+        
+        .main-content { flex: 1; padding: 75px 20px 20px; max-width: calc(100% - 220px); }
+        
+        /* 分類按鈕區 */
+        .filter-bar { margin-bottom: 20px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .filter-btn { padding: 8px 16px; border-radius: 20px; border: 1.5px solid var(--main); background: transparent; color: var(--main); cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .filter-btn.active { background: var(--main); color: white; }
 
-/* 左側主區 */
-.main-content {
-  flex: 1;
-}
+        #adminPanel { display: none; background: white; padding: 15px; border: 2px solid var(--main); border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        
+        #flowers { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+        .flower { background: white; padding: 10px; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 2px solid transparent; }
+        .flower img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 8px; background: #eee; }
+        .flower-name { font-size: 13px; font-weight: bold; margin-top: 8px; height: 32px; overflow: hidden; line-height: 1.2; }
+        
+        .flower.not-owned { opacity: 0.3; filter: grayscale(100%); }
+        .flower.owned { opacity: 1; filter: none; border: 2px solid var(--main); box-shadow: 0 0 10px rgba(106, 90, 205, 0.3); }
+        
+        /* 側邊欄收藏家按鈕 */
+        .sidebar { width: 220px; padding: 75px 15px 20px; background: white; border-left: 1px solid #ddd; height: 100vh; position: sticky; top: 0; overflow-y: auto; box-sizing: border-box; }
+        #saveBtn { width: 100%; padding: 12px; background: var(--success); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 20px; display: none; transition: 0.3s; box-shadow: 0 4px 0 #219150; }
+        #saveBtn.changed { background: #f39c12; box-shadow: 0 4px 0 #d35400; }
+        .sidebar h4 { border-bottom: 2px solid var(--main); padding-bottom: 5px; margin-top: 0; color: var(--main); }
+        
+        .user-filter-btn { width: 100%; text-align: left; padding: 10px; margin-bottom: 8px; border: 1px solid #eee; border-radius: 8px; background: #fdfdfd; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+        .user-filter-btn:hover, .user-filter-btn.active { border-color: var(--main); background: #f0edff; }
+        .user-count { background: var(--main); color: white; border-radius: 10px; padding: 2px 8px; font-size: 11px; }
 
-/* 分類按鈕 */
-.categories {
-  margin-bottom: 10px;
-}
-.categories button {
-  margin-right: 6px;
-  padding: 6px 12px;
-  cursor: pointer;
-}
-
-/* 狀態 */
-.filter-status {
-  margin: 10px 0;
-  padding: 6px 12px;
-  background: #eee;
-  display: inline-block;
-  border-radius: 20px;
-  font-size: 14px;
-}
-
-/* 花牆 */
-#flowers {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 14px;
-  margin-top: 20px;
-}
-.flower {
-  cursor: pointer;
-  text-align: center;
-}
-.flower img {
-  width: 100%;
-  border-radius: 10px;
-}
-.tag {
-  font-size: 12px;
-  color: #666;
-}
-
-/* 好友列表，固定右側 */
-.friends-container {
-  width: 140px;
-  position: sticky;
-  top: 20px;
-  height: calc(100vh - 40px);
-  overflow-y: auto;
-  margin-left: 20px;
-  border-left: 1px solid #ccc;
-  padding-left: 10px;
-}
-.friends-container strong {
-  display: block;
-  margin-bottom: 6px;
-}
-.friends span {
-  display: block;
-  margin-bottom: 8px;
-  cursor: pointer;
-}
-.friends span.active {
-  font-weight: bold;
-  text-decoration: underline;
-}
-
-/* Popup */
-#overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 10;
-}
-#popup {
-  display: none;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: #fff;
-  padding: 16px;
-  border-radius: 10px;
-  max-width: 320px;
-  width: 90%;
-  z-index: 11;
-}
-#popup img {
-  width: 100%;
-  border-radius: 8px;
-  margin-bottom: 10px;
-}
-
-/* ===== 手機版 ===== */
-@media (max-width: 768px) {
-  body {
-    flex-direction: row;
-  }
-
-  .main-content {
-    flex: 1;
-    margin-right: 100px; /* 預留右側好友寬度 */
-  }
-
-  .friends-container {
-    width: 100px; /* 固定右側寬度 */
-    position: fixed; /* 固定在右側 */
-    right: 0;
-    top: 60px;
-    height: calc(100vh - 60px);
-    overflow-y: auto;
-    border-left: 1px solid #ccc;
-    padding-left: 5px;
-    background: #fff;
-    z-index: 5;
-  }
-
-  #flowers {
-    grid-template-columns: repeat(4, 1fr); /* 一排 4 個 */
-    gap: 6px;
-  }
-
-  .flower img {
-    width: 100%;
-    height: 80px; /* 縮小圖片高度 */
-    object-fit: cover;
-    border-radius: 6px;
-  }
-
-  .flower div {
-    font-size: 10px; /* 名字和分類文字縮小 */
-  }
-
-  /* 手機版好友文字縮小 */
-  .friends span {
-    font-size: 12px;
-  }
-  .friends strong {
-    font-size: 13px;
-  }
-}
-</style>
+        #toast { position: fixed; bottom: 25px; right: 25px; padding: 12px 25px; background: #333; color: white; border-radius: 50px; z-index: 3000; display: none; font-weight: bold; }
+        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+        
+        @media (max-width: 768px) { .main-content { max-width: 100%; } .sidebar { display: none; } }
+    </style>
 </head>
 <body>
 
+<div id="loading">
+    <div style="font-size: 24px; margin-bottom: 15px;">🌸 正在載入花房...</div>
+    <div id="loadingMsg">正在對齊 GitHub 圖片庫與篩選功能</div>
+</div>
+
+<div id="toast"></div>
+
+<div class="admin-bar">
+    <div id="loginArea">
+        帳號: <input type="text" id="uIn"> 密碼: <input type="password" id="pIn"> <button onclick="login()">登入</button>
+    </div>
+    <div id="userArea" style="display:none;">
+        <span id="welcomeTxt"></span>
+        <button onclick="location.reload()" style="background:var(--error); margin-left:10px;">登出</button>
+    </div>
+</div>
+
 <div class="main-content">
-  <h2>🌸 花朵收藏</h2>
+    <div class="filter-bar" id="categoryFilters">
+        <strong>分類：</strong>
+        <button class="filter-btn active" id="btn-all" onclick="filterBy('all', 'all', this)">全部顯示</button>
+    </div>
 
-  <!-- 分類 -->
-  <div class="categories">
-    <strong>分類：</strong>
-    <button onclick="selectCategory('全部')" class="active">全部</button>
-    <button onclick="selectCategory('紅')">紅</button>
-    <button onclick="selectCategory('金')">金</button>
-    <button onclick="selectCategory('紫')">紫</button>
-    <button onclick="selectCategory('藍')">藍</button>
-  
-  </div>
-
-  <!-- 狀態 -->
-  <div id="filterStatus" class="filter-status">目前顯示：全部</div>
-
-  <!-- 花牆 -->
-  <div id="flowers"></div>
+    <div id="adminPanel">
+        <h4 style="margin-top:0;">🛠️ 管理員控制台</h4>
+        <div style="display: flex; gap: 20px;">
+            <div>名: <input type="text" id="mN"> 密: <input type="text" id="mP"> <button onclick="addM()">新增成員</button></div>
+            <div>名: <input type="text" id="fN"> 分: <input type="text" id="fC" value="紅" style="width:40px"> <button onclick="addF()">花朵建檔</button></div>
+        </div>
+    </div>
+    <div id="flowers"></div>
 </div>
 
-<!-- 好友列表（右側固定） -->
-<div class="friends-container">
-  <div class="friends" id="friendsBox"></div>
-</div>
-
-<!-- Popup（花） -->
-<div id="overlay" onclick="closePopup()"></div>
-<div id="popup">
-  <div id="popupContent"></div>
-  <button onclick="closePopup()">關閉</button>
+<div class="sidebar">
+    <button onclick="manualSync()" id="saveBtn">💾 儲存目前進度</button>
+    <div id="sideBox">
+        <h4>收藏家篩選</h4>
+        <div id="userList"></div>
+    </div>
 </div>
 
 <script>
-// ===== 資料 =====
-const flowers = [
-{ name: '紅-梅月·疏影聽弦-28分', image: 'images/紅/紅-梅月·疏影聽弦.jpg', owners: ['魔法師布布','煥雨','紫色鬱金香','酥巴拉si ❥','萌新帥底迪❥','菲菲','策寶寶❥'], category: '紅' },
-{ name: '紅-葭月·棲舟泛漪-28分', image: 'images/紅/紅-葭月·棲舟泛漪.jpg', owners: ['魔法師布布','酥巴拉si ❥','策寶寶❥'], category: '紅' },
-{ name: '紅-陽月·芙香盈袖-28分', image: 'images/紅/紅-陽月·芙香盈袖.jpg', owners: ['魔法師布布','策寶寶❥'], category: '紅' },
-{ name: '紅-柳月·溪亭燕語-28分', image: 'images/紅/紅-柳月·溪亭燕語.jpg', owners: ['魔法師布布','萌新帥底迪❥','婲花','紫色鬱金香','酥巴拉si ❥','紫色瑪姬QQ','菲菲'],category: '紅' },
-{ name: '紅-花宴流芳-28分', image: 'images/紅/紅-花宴流芳.jpg', owners: ['魔法師布布'], category: '紅' },
-{ name: '紅-芳華尋蝶-28分', image: 'images/紅/紅-芳華尋蝶.jpg', owners: ['魔法師布布','安太睡❥','萌新帥底迪❥','紫色瑪姬QQ','菲菲','策寶寶❥'], category: '紅' },  
-{ name: '紅-繁花滿築-28分', image: 'images/紅/紅-繁花滿築.jpg', owners: ['紫色瑪姬QQ','萌新帥底迪❥','安太睡❥','菲菲','策寶寶❥','玩看看'], category: '紅' },
-{ name: '紅-歡雲妙舞-28分', image: 'images/紅/紅-歡雲妙舞.jpg', owners: ['萌新帥底迪❥','紫色瑪姬QQ','菲菲'], category: '紅' },  
-{ name: '紅-夜夢花庭-28分', image: 'images/紅/紅-夜夢花庭.jpg', owners: ['萌新帥底迪❥','Ki洽納❥','紫色的晴晴飛','酥巴拉si ❥','月月','玩看看'], category: '紅' },  
-{ name: '紅-星河映蕊-28分', image: 'images/紅/紅-星河映蕊.jpg', owners: ['魔法師布布','紫色瑪姬QQ','策寶寶❥','婲花','萌新帥底迪❥','安太睡❥','紫魚星辰','小魚兒','妖妃庾晚音❥','Ki洽納❥','菲菲','玩看看'], category: '紅' },
-{ name: '紅-歡雪頌冬', image: 'images/紅/紅-歡雪頌冬.jpg', owners: ['策寶寶❥','小魚兒','魔法師布布','萌新帥底迪❥'], category: '紅' },  
-{ name: '紅-碧羽青鸞-30分', image: 'images/紅/紅-碧羽青鸞.jpg', owners: ['策寶寶❥'], category: '紅' },
-{ name: '紅-焰火迎春-30分', image: 'images/紅/紅-焰火迎春.jpg', owners: ['萌新帥底迪❥','紫色鬱金香','酥巴拉si ❥','玩看看'], category: '紅' },  
-{ name: '紅-福運招財', image: 'images/紅/紅-福運招財.jpg', owners: ['紫色鬱金香','婲花','煥雨','萌新帥底迪❥','酥巴拉si ❥','玩看看'], category: '紅' },  
-{ name: '金-星槎仙舟', image: 'images/金/金-星槎仙舟.jpg', owners: ['策寶寶❥','菲菲'], category: '金' },
-{ name: '金-仙女散花', image: 'images/金/金-仙女散花.jpg', owners: ['菲菲','策寶寶❥','紫色瑪姬QQ'], category: '金' },  
-{ name: '金-姑蘇雨蒙', image: 'images/金/金-姑蘇雨蒙.jpg', owners: ['魔法師布布','菲菲','策寶寶❥'], category: '金' }, 
-{ name: '金-杏色春衫', image: 'images/金/金-杏色春衫.jpg', owners: ['魔法師布布','酥巴拉si ❥','紫色瑪姬QQ','菲菲','策寶寶❥'], category: '金' },
-{ name: '金-寶珠玉蘭', image: 'images/金/金-寶珠玉蘭.jpg', owners: ['紫色瑪姬QQ','紫摸懶','飛寶','菲菲','婲花','紫魚星辰','策寶寶❥','魔法師布布','萌新帥底迪❥','紫摸懶','玩看看'], category: '金' },
-{ name: '金-冰藍蝶舞玫瑰', image: 'images/金/金-冰藍蝶舞玫瑰.jpg', owners: ['婲花','策寶寶❥','紫色瑪姬QQ','玩看看'], category: '金' },
-{ name: '金-粉櫻蝶舞玫瑰', image: 'images/金/金-粉櫻蝶舞玫瑰.jpg', owners: ['魔法師布布','紫色瑪姬QQ','策寶寶❥','玩看看'], category: '金' },
-{ name: '金-白靈逐浪', image: 'images/金/金-白靈逐浪.jpg', owners: ['萌新帥底迪❥','策寶寶❥'], category: '金' },
-{ name: '金-幽蘭逐影', image: 'images/金/金-幽蘭逐影.jpg', owners: ['菲菲','萌新帥底迪❥','策寶寶❥'], category: '金' },
-{ name: '金-桃影浮瀾', image: 'images/金/金-桃影浮瀾.jpg', owners: ['萌新帥底迪❥','策寶寶❥'], category: '金' },
-{ name: '金-花籠星語', image: 'images/金/金-花籠星語.jpg', owners: ['萌新帥底迪❥'], category: '金' },
-{ name: '金-花籠流芳', image: 'images/金/金-花籠流芳.jpg', owners: ['魔法師布布','萌新帥底迪❥'], category: '金' },
-{ name: '金-花籠瓊光', image: 'images/金/金-花籠瓊光.jpg', owners: ['萌新帥底迪❥','策寶寶❥'], category: '金' },
-{ name: '金-玉玲瓏臘梅', image: 'images/金/金-玉玲瓏臘梅.jpg', owners: ['魔法師布布','菲菲','策寶寶❥','玩看看'], category: '金' },
-{ name: '金-紅香妃臘梅', image: 'images/金/金-紅香妃臘梅.jpg', owners: ['紫色瑪姬QQ','菲菲','策寶寶❥','玩看看'], category: '金' },
-{ name: '金-瑤光牡丹', image: 'images/金/金-瑤光牡丹.jpg', owners: ['酥巴拉si ❥','紫色瑪姬QQ','菲菲','策寶寶❥'], category: '金' },
-{ name: '金-紫曜牡丹', image: 'images/金/金-紫曜牡丹.jpg', owners: ['魔法師布布','酥巴拉si ❥','策寶寶❥','菲菲','玩看看'], category: '金' },
-{ name: '金-霽瀾牡丹', image: 'images/金/金-霽瀾牡丹.jpg', owners: ['婲花','萌新帥底迪❥','魔法師布布','菲菲','策寶寶❥'], category: '金' },
-{ name: '金-珠匣橘芙蓉', image: 'images/金/金-珠匣橘芙蓉.jpg', owners: ['策寶寶❥','婲花','紫色鬱金香','菲菲'], category: '金' },
-{ name: '金-珠匣紫芙蓉', image: 'images/金/金-珠匣紫芙蓉.jpg', owners: ['酥巴拉si ❥','煥雨','紫色瑪姬QQ','紫色鬱金香','菲菲','策寶寶❥'], category: '金' },
-{ name: '金-珠匣粉芙蓉', image: 'images/金/金-珠匣粉芙蓉.jpg', owners: ['魔法師布布','婲花','菲菲','紫色鬱金香','紫色瑪姬QQ','月月','策寶寶❥','酥巴拉si ❥'], category: '金' },
-{ name: '金-曜緋帝王花', image: 'images/金/金-曜緋帝王花.jpg', owners: ['萌新帥底迪❥','策寶寶❥','魔法師布布'], category: '金' },
-{ name: '金-霞暉帝王花', image: 'images/金/金-霞暉帝王花.jpg', owners: ['萌新帥底迪❥','紫色鬱金香','酥巴拉si ❥','紫色瑪姬QQ','月月'], category: '金' },
-{ name: '金-琉藍帝王花', image: 'images/金/金-琉藍帝王花.jpg', owners: ['紫色瑪姬QQ','策寶寶❥','紫色鬱金香','月月','萌新帥底迪❥','酥巴拉si ❥'], category: '金' },
-{ name: '金-馬上有財-25分', image: 'images/金/金-馬上有財.jpg', owners: ['萌新帥底迪❥','紫色鬱金香','安太睡❥','小魚兒','Ki洽納❥','酥巴拉si ❥','玩看看'], category: '金' },
-{ name: '金-馬上有福-25分', image: 'images/金/金-馬上有福.jpg', owners: ['萌新帥底迪❥','紫色鬱金香','紫魚星辰','安太睡❥','小魚兒','妖妃庾晚音❥','酥巴拉si ❥','飛寶','婲花','玩看看'], category: '金' },
-{ name: '金-馬上柿橙-25分', image: 'images/金/金-馬上柿橙.jpg', owners: ['萌新帥底迪❥','紫色鬱金香','菲菲','酥巴拉si ❥','玩看看'], category: '金' },
-{ name: '金-花露甜粥-25分', image: 'images/金/金-花露甜粥.jpg', owners: ['萌新帥底迪❥','安太睡❥','紫色瑪姬QQ','菲菲','小魚兒','酥巴拉si ❥','玩看看'], category: '金' },
-{ name: '金-夜藍香息', image: 'images/金/金-夜藍香息.jpg', owners: ['萌新帥底迪❥','Ki洽納❥','紫色的晴晴飛','月月','菲菲','婲花','玩看看'], category: '金' },
-{ name: '金-玫瑰小熊-25分', image: 'images/金/金-玫瑰小熊.jpg', owners: ['萌新帥底迪❥','紫色鬱金香','安太睡❥','煥雨','小魚兒','菲菲','紫摸懶','婲花','Ki洽納❥','魔法師布布','酥巴拉si ❥','紫色瑪姬QQ','玩看看'], category: '金' },
-{ name: '金-夢蝶花章', image: 'images/金/金-夢蝶花章.jpg', owners: ['紫色瑪姬QQ','煥雨','菲菲','玩看看'], category: '金' },
-{ name: '金-鳶花芳集', image: 'images/金/金-鳶花芳集.jpg', owners: ['萌新帥底迪❥','安太睡❥','紫色瑪姬QQ','玩看看'], category: '金' },
-{ name: '金-瑤枝桂影', image: 'images/金/金-瑤枝桂影.jpg', owners: [], category: '金' },
-{ name: '金-竹映金輝', image: 'images/金/金-竹映金輝.jpg', owners: ['策寶寶❥'], category: '金' }, 
-{ name: '金-靈松照夜', image: 'images/金/金-靈松照夜.jpg', owners: ['酥巴拉si ❥'], category: '金' },
-{ name: '金-靈瑞仙桃', image: 'images/金/金-靈瑞仙桃.jpg', owners: ['紫色鬱金香','紫色瑪姬QQ','菲菲','萌新帥底迪❥'], category: '金' },
-{ name: '金-柿柿如意', image: 'images/金/金-柿柿如意.jpg', owners: ['紫色鬱金香','婲花','煥雨','紫色瑪姬QQ','萌新帥底迪❥'], category: '金' },
-{ name: '金-方蕊瓊漿', image: 'images/金/金-方蕊瓊漿.jpg', owners: ['魔法師布布'], category: '金' },
-{ name: '金-馥香花餅', image: 'images/金/金-馥香花餅.jpg', owners: ['魔法師布布','小魚兒','萌新帥底迪❥','紫色的晴晴飛','玩看看'], category: '金' },
-{ name: '金-元氣破蛋', image: 'images/金/金-元氣破蛋.jpg', owners: ['策寶寶❥','魔法師布布','小魚兒','酥巴拉si ❥','萌新帥底迪❥','玩看看'], category: '金' },
-{ name: '金-恬夢聖鈴', image: 'images/金/金-恬夢聖鈴.jpg', owners: ['策寶寶❥','萌新帥底迪❥','魔法師布布'], category: '金' },
-{ name: '金-霓光映樹', image: 'images/金/金-霓光映樹.jpg', owners: ['策寶寶❥','小魚兒','萌新帥底迪❥','魔法師布布'], category: '金' },
-{ name: '金-火耀金丹', image: 'images/金/金-火耀金丹.jpg', owners: ['魔法師布布','安太睡❥','策寶寶❥','小魚兒','萌新帥底迪❥','妖妃庾晚音❥','Ki洽納❥','婲花','菲菲'], category: '金' },
-{ name: '金-瓊台玉露', image: 'images/金/金-瓊台玉露.jpg', owners: ['妖妃庾晚音❥','萌新帥底迪❥','安太睡❥','婲花','月月','酥巴拉si ❥','策寶寶❥','菲菲','紫色瑪姬QQ','玩看看'], category: '金' },
-{ name: '金-金纏腰', image: 'images/金/金-金纏腰.jpg', owners: ['紫色瑪姬QQ','婲花','煥雨','妖妃庾晚音❥','菲菲'], category: '金' },
-{ name: '金-鶴寄星河', image: 'images/金/金-鶴寄星河.jpg', owners: ['玩看看'], category: '金' },
-{ name: '紫-薄紅虞美人', image: 'images/紫/紫-薄紅虞美人.jpg', owners: ['婲花','策寶寶❥','菲菲'], category: '紫' },
-{ name: '紫-黛紫虞美人', image: 'images/紫/紫-黛紫虞美人.jpg', owners: ['策寶寶❥','婲花','菲菲','玩看看'], category: '紫' },
-{ name: '紫-橙黃虞美人', image: 'images/紫/紫-橙黃虞美人.jpg', owners: ['菲菲','婲花','策寶寶❥','紫色瑪姬QQ','玩看看'], category: '紫' },
-{ name: '紫-棉花小熊-23分', image: 'images/紫/紫-棉花小熊.jpg', owners: ['酥巴拉si ❥','煥雨','飛寶','策寶寶❥','紫色翅膀','妖妃庾晚音❥','玩看看','紫色的晴晴飛','紫色瑪姬QQ','紫色鬱金香','月月','Ki洽納❥','菲菲','婲花','紫摸懶','魔法師布布','安太睡❥','小魚兒','萌新帥底迪❥'], category: '紫' },
-{ name: '紫-粉紅木槿花', image: 'images/紫/紫-粉紅木槿花.jpg', owners: ['酥巴拉si ❥','煥雨','飛寶','策寶寶❥','玩看看','紫色翅膀','紫色的晴晴飛','紫色瑪姬QQ','紫色鬱金香','Ki洽納❥','月月','紫魚星辰','菲菲','婲花','紫摸懶','魔法師布布','安太睡❥','小魚兒','萌新帥底迪❥','妖妃庾晚音❥','月月','紫色鬱金香'], category: '紫' },
-{ name: '紫-輪生冬青', image: 'images/紫/紫-輪生冬青.jpg', owners: ['紫色鬱金香','煥雨','飛寶','紫色翅膀','玩看看','紫色的晴晴飛','策寶寶❥','紫魚星辰','酥巴拉si ❥','紫色瑪姬QQ','月月','Ki洽納❥','菲菲','婲花','紫摸懶','魔法師布布','安太睡❥','小魚兒','萌新帥底迪❥','妖妃庾晚音❥','月月'], category: '紫' },
-{ name: '紫-半見長壽花', image: 'images/紫/紫-半見長壽花.jpg', owners: ['妖妃庾晚音❥'], category: '紫' },
-{ name: '紫-朱柿長壽花', image: 'images/紫/紫-朱柿長壽花.jpg', owners: ['紫摸懶'], category: '紫' },
-{ name: '紫-藕粉長壽花', image: 'images/紫/紫-藕粉長壽花.jpg', owners: ['魔法師布布','策寶寶❥','菲菲'], category: '紫' },
-{ name: '紫-夕嵐薔薇花', image: 'images/紫/紫-夕嵐薔薇花.jpg', owners: ['紫魚星辰','Ki洽納❥','紫色瑪姬QQ'], category: '紫' },
-{ name: '紫-晴山薔薇花', image: 'images/紫/紫-晴山薔薇花.jpg', owners: ['魔法師布布','策寶寶❥','菲菲'], category: '紫' },
-{ name: '紫-黃鶯薔薇花', image: 'images/紫/紫-黃鶯薔薇花.jpg', owners: ['魔法師布布','策寶寶❥','菲菲'], category: '紫' },
-{ name: '紫-奶桃大麗花', image: 'images/紫/紫-奶桃大麗花.jpg', owners: ['安太睡❥','煥雨','紫色翅膀','妖妃庾晚音❥'], category: '紫' },
-{ name: '紫-黑曜大麗花', image: 'images/紫/紫-黑曜大麗花.jpg', owners: ['婲花'], category: '紫' },
-{ name: '紫-金橙海葵', image: 'images/紫/紫-金橙海葵.jpg', owners: ['萌新帥底迪❥','紫魚星辰'], category: '紫' },
-{ name: '紫-霜白海葵', image: 'images/紫/紫-霜白海葵.jpg', owners: ['魔法師布布','策寶寶❥','菲菲'], category: '紫' },
-{ name: '紫-焰緋海葵', image: 'images/紫/紫-焰緋海葵.jpg', owners: ['紫魚星辰','萌新帥底迪❥','紫色翅膀'], category: '紫' },
-{ name: '紫-明黃跳舞蘭', image: 'images/紫/紫-明黃跳舞蘭.jpg', owners: ['妖妃庾晚音❥'], category: '紫' },
-{ name: '紫-櫻紅跳舞蘭', image: 'images/紫/紫-櫻紅跳舞蘭.jpg', owners: ['策寶寶❥'], category: '紫' },
-{ name: '紫-秋楓跳舞蘭', image: 'images/紫/紫-秋楓跳舞蘭.jpg', owners: ['策寶寶❥'], category: '紫' },
-{ name: '紫-粉櫻月見草', image: 'images/紫/紫-粉櫻月見草.jpg', owners: ['魔法師布布','飛寶','策寶寶❥','菲菲','紫色瑪姬QQ','紫摸懶','紫魚星辰','Ki洽納❥','安太睡❥','小魚兒','妖妃庾晚音❥','婲花','萌新帥底迪❥','玩看看'], category: '紫' },
-{ name: '紫-蜜合月見草', image: 'images/紫/紫-蜜合月見草.jpg', owners: ['妖妃庾晚音❥'], category: '紫' },
-{ name: '紫-碧落月見草', image: 'images/紫/紫-碧落月見草.jpg', owners: ['Ki洽納❥','玩看看','魔法師布布','婲花','紫色翅膀','萌新帥底迪❥','策寶寶❥','紫魚星辰','小魚兒','妖妃庾晚音❥','菲菲','萌新帥底迪❥'], category: '紫' },
-{ name: '紫-毛蕊紫銀蓮', image: 'images/紫/紫-毛蕊紫銀蓮.jpg', owners: ['魔法師布布','策寶寶❥','玩看看','紫色的晴晴飛','萌新帥底迪❥'], category: '紫' },
-{ name: '紫-玫瑰粉銀蓮', image: 'images/紫/紫-玫瑰粉銀蓮.jpg', owners: ['妖妃庾晚音❥','紫色的晴晴飛','萌新帥底迪❥'], category: '紫' },
-{ name: '紫-黑蕊白銀蓮', image: 'images/紫/紫-黑蕊白銀蓮.jpg', owners: ['紫魚星辰','婲花','Ki洽納❥','萌新帥底迪❥'], category: '紫' },
-{ name: '紫-曼陀羅華', image: 'images/紫/紫-曼陀羅華.jpg', owners: ['菲菲','紫色翅膀','安太睡❥','妖妃庾晚音❥','紫摸懶','紫色瑪姬QQ'], category: '紫' },
-{ name: '紫-曼珠沙華-23分', image: 'images/紫/紫-曼珠沙華.jpg', owners: ['菲菲','紫摸懶','煥雨','婲花','紫色鬱金香','策寶寶❥','小魚兒','玩看看','月月','魔法師布布','紫色瑪姬QQ','安太睡❥','萌新帥底迪❥','酥巴拉si ❥'], category: '紫' },
-{ name: '紫-朱砂丹桂', image: 'images/紫/紫-朱砂丹桂.jpg', owners: ['魔法師布布','飛寶','酥巴拉si ❥','妖妃庾晚音❥'], category: '紫' },
-{ name: '紫-青山銀桂', image: 'images/紫/紫-青山銀桂.jpg', owners: ['妖妃庾晚音❥','紫色翅膀','煥雨'], category: '紫' },
-{ name: '紫-波葉金桂', image: 'images/紫/紫-波葉金桂.jpg', owners: ['妖妃庾晚音❥','紫色瑪姬QQ'], category: '紫' },
-{ name: '紫-柔藍飛燕草', image: 'images/紫/紫-柔藍飛燕草.jpg', owners: ['策寶寶❥','魔法師布布','菲菲'], category: '紫' },
-{ name: '紫-紺紫飛燕草', image: 'images/紫/紫-紺紫飛燕草.jpg', owners: ['小魚兒','妖妃庾晚音❥'], category: '紫' },
-{ name: '紫-桃夭飛燕草', image: 'images/紫/紫-桃夭飛燕草.jpg', owners: ['菲菲','策寶寶❥'], category: '紫' },
-{ name: '紫-橘光朱頂紅', image: 'images/紫/紫-橘光朱頂紅.jpg', owners: ['策寶寶❥','紫色瑪姬QQ','酥巴拉si ❥','魔法師布布'], category: '紫' },
-{ name: '紫-粉羽朱頂紅', image: 'images/紫/紫-粉羽朱頂紅.jpg', owners: ['策寶寶❥','酥巴拉si ❥','菲菲','紫色瑪姬QQ','魔法師布布'], category: '紫' },
-{ name: '紫-火蕊朱頂紅', image: 'images/紫/紫-火蕊朱頂紅.jpg', owners: ['策寶寶❥','紫色瑪姬QQ','魔法師布布'], category: '紫' },
-{ name: '紫-春曉木香花', image: 'images/紫/紫-春曉木香花.jpg', owners: ['策寶寶❥','酥巴拉si ❥','紫色瑪姬QQ','魔法師布布'], category: '紫' },
-{ name: '紫-純白木香花', image: 'images/紫/紫-純白木香花.jpg', owners: ['魔法師布布','策寶寶❥','紫色瑪姬QQ'], category: '紫' },
-{ name: '紫-桃雲木香花', image: 'images/紫/紫-桃雲木香花.jpg', owners: ['策寶寶❥','魔法師布布','菲菲'], category: '紫' },
-{ name: '紫-瑩白露薇花', image: 'images/紫/紫-瑩白露薇花.jpg', owners: ['魔法師布布','策寶寶❥','妖妃庾晚音❥','萌新帥底迪❥','安太睡❥'], category: '紫' },
-{ name: '紫-粉米露薇花', image: 'images/紫/紫-粉米露薇花.jpg', owners: ['策寶寶❥','紫色瑪姬QQ','魔法師布布'], category: '紫' },
-{ name: '紫-藤黃露薇花', image: 'images/紫/紫-藤黃露薇花.jpg', owners: ['Ki洽納❥','妖妃庾晚音❥'], category: '紫' },
-{ name: '紫-紫暈石竹花', image: 'images/紫/紫-紫暈石竹花.jpg', owners: ['魔法師布布','策寶寶❥','萌新帥底迪❥'], category: '紫' },
-{ name: '紫-粉韻石竹花', image: 'images/紫/紫-粉韻石竹花.jpg', owners: ['菲菲','策寶寶❥','魔法師布布','紫色瑪姬QQ','萌新帥底迪❥'], category: '紫' },
-{ name: '紫-赤暉石竹花', image: 'images/紫/紫-赤暉石竹花.jpg', owners: [], category: '紫' },
-{ name: '紫-白茜劍蘭', image: 'images/紫/紫-白茜劍蘭.jpg', owners: ['紫魚星辰','紫色翅膀','策寶寶❥','小魚兒'], category: '紫' },
-{ name: '紫-橙心劍蘭', image: 'images/紫/紫-橙心劍蘭.jpg', owners: ['策寶寶❥','紫色瑪姬QQ','菲菲'], category: '紫' },
-{ name: '紫-芋紫劍蘭', image: 'images/紫/紫-芋紫劍蘭.jpg', owners: ['魔法師布布','策寶寶❥','紫色的晴晴飛','安太睡❥','妖妃庾晚音❥'], category: '紫' },
-{ name: '紫-白粉蕙蘭', image: 'images/紫/紫-白粉蕙蘭.jpg', owners: ['婲花','菲菲','妖妃庾晚音❥'], category: '紫' },
-{ name: '紫-春綠蕙蘭', image: 'images/紫/紫-春綠蕙蘭.jpg', owners: ['魔法師布布','策寶寶❥','菲菲'], category: '紫' },
-{ name: '紫-碧玉六初花', image: 'images/紫/紫-碧玉六初花.jpg', owners: ['萌新帥底迪❥'], category: '紫' },
-{ name: '紫-緗桃六初花', image: 'images/紫/紫-緗桃六初花.jpg', owners: ['萌新帥底迪❥'], category: '紫' },
-{ name: '紫-淺黃綠絨蒿', image: 'images/紫/紫-淺黃綠絨蒿.jpg', owners: ['妖妃庾晚音❥','煥雨','紫色翅膀','紫色瑪姬QQ','菲菲'], category: '紫' },
-{ name: '紫-幽藍綠絨蒿', image: 'images/紫/紫-幽藍綠絨蒿.jpg', owners: ['妖妃庾晚音❥','策寶寶❥','紫魚星辰','菲菲','紫色瑪姬QQ','Ki洽納❥'], category: '紫' },
-{ name: '紫-黛紫綠絨蒿', image: 'images/紫/紫-黛紫綠絨蒿.jpg', owners: ['策寶寶❥','紫色瑪姬QQ','菲菲'], category: '紫' },
-{ name: '紫-淺紺紫藤花', image: 'images/紫/紫-淺紺紫藤花.jpg', owners: ['酥巴拉si ❥','小魚兒','婲花','煥雨','紫色瑪姬QQ','策寶寶❥','安太睡❥','菲菲','玩看看'], category: '紫' },
-{ name: '紫-暮粉紫藤花', image: 'images/紫/紫-暮粉紫藤花.jpg', owners: ['婲花','策寶寶❥','紫色瑪姬QQ','酥巴拉si ❥','菲菲','紫色鬱金香','玩看看'], category: '紫' },
-{ name: '紫-霽藍紫藤花', image: 'images/紫/紫-霽藍紫藤花.jpg', owners: ['婲花','煥雨','紫色瑪姬QQ','紫色鬱金香','酥巴拉si ❥','萌新帥底迪❥','策寶寶❥','菲菲','玩看看'], category: '紫' },
-{ name: '紫-絳橙嘉蘭', image: 'images/紫/紫-絳橙嘉蘭.jpg', owners: ['婲花','策寶寶❥','安太睡❥','月月'], category: '紫' },
-{ name: '紫-焰紅嘉蘭', image: 'images/紫/紫-焰紅嘉蘭.jpg', owners: ['紫色鬱金香','玩看看'], category: '紫' },
-{ name: '紫-紗粉嘉蘭', image: 'images/紫/紫-紗粉嘉蘭.jpg', owners: ['萌新帥底迪❥','菲菲','煥雨','婲花','紫色瑪姬QQ'], category: '紫' },
-{ name: '紫-粉菲鐵筷花', image: 'images/紫/紫-粉菲鐵筷花.jpg', owners: ['萌新帥底迪❥','策寶寶❥','紫色鬱金香','紫色瑪姬QQ','菲菲','紫色瑪姬QQ','玩看看'], category: '紫' },
-{ name: '紫-褐紅鐵筷花', image: 'images/紫/紫-褐紅鐵筷花.jpg', owners: ['妖妃庾晚音❥','Ki洽納❥'], category: '紫' },
-{ name: '紫-鵝黃鐵筷花', image: 'images/紫/紫-鵝黃鐵筷花.jpg', owners: ['魔法師布布','妖妃庾晚音❥','紫摸懶','紫色瑪姬QQ','萌新帥底迪❥'], category: '紫' },
-{ name: '紫-橘霞華珊', image: 'images/紫/紫-橘霞華珊.jpg', owners: ['紫色翅膀','紫魚星辰','萌新帥底迪❥'], category: '紫' },
-{ name: '紫-粉紫華珊', image: 'images/紫/紫-粉紫華珊.jpg', owners: ['紫色翅膀','飛寶','萌新帥底迪❥','紫魚星辰','月月'], category: '紫' },
-{ name: '紫-青碧華珊', image: 'images/紫/紫-青碧華珊.jpg', owners: ['魔法師布布','策寶寶❥','玩看看','紫色瑪姬QQ','婲花','菲菲','酥巴拉si ❥','萌新帥底迪❥'], category: '紫' },
-{ name: '紫-甜橙美女櫻-23分', image: 'images/紫/紫-甜橙美女櫻.jpg', owners: ['菲菲','策寶寶❥','婲花'], category: '紫' },
-{ name: '紫-淺韻美女櫻-23分', image: 'images/紫/紫-淺韻美女櫻.jpg', owners: ['菲菲','紫色瑪姬QQ','策寶寶❥','婲花'], category: '紫' },
-{ name: '紫-橙霞花毛茛', image: 'images/紫/紫-橙霞花毛茛.jpg', owners: ['萌新帥底迪❥','策寶寶❥','菲菲','婲花','紫色瑪姬QQ'], category: '紫' },
-{ name: '紫-奶黃花毛茛', image: 'images/紫/紫-奶黃花毛茛.jpg', owners: ['萌新帥底迪❥','策寶寶❥','小魚兒','婲花','酥巴拉si ❥','安太睡❥','月月','紫色瑪姬QQ','菲菲'], category: '紫' },
-{ name: '紫-蜜桃花毛茛', image: 'images/紫/紫-蜜桃花毛茛.jpg', owners: ['菲菲','策寶寶❥','萌新帥底迪❥'], category: '紫' },
-{ name: '紫-輕紫格桑花', image: 'images/紫/紫-輕紫格桑花.jpg', owners: ['策寶寶❥','婲花','菲菲','紫色瑪姬QQ'], category: '紫' },
-{ name: '紫-煙粉格桑花', image: 'images/紫/紫-煙粉格桑花.jpg', owners: ['策寶寶❥','菲菲'], category: '紫' },
-{ name: '紫-粉黛德鳶', image: 'images/紫/紫-粉黛德鳶.jpg', owners: ['紫色瑪姬QQ','策寶寶❥'], category: '紫' },
-{ name: '紫-杏緋德鳶', image: 'images/紫/紫-杏緋德鳶.jpg', owners: ['策寶寶❥','紫色瑪姬QQ','菲菲','玩看看'], category: '紫' },
-{ name: '紫-金白德鳶', image: 'images/紫/紫-金白德鳶.jpg', owners: ['魔法師布布','紫色翅膀','飛寶','紫色瑪姬QQ','妖妃庾晚音❥','安太睡❥'], category: '紫' }, 
-{ name: '紫-飛黃玉蘭', image: 'images/紫/紫-飛黃玉蘭.jpg', owners: ['策寶寶❥','紫色瑪姬QQ','菲菲'], category: '紫' },
-{ name: '紫-黛紫玉蘭', image: 'images/紫/紫-黛紫玉蘭.jpg', owners: ['魔法師布布','策寶寶❥','菲菲'], category: '紫' },
-{ name: '紫-銀白雪柳', image: 'images/紫/紫-銀白雪柳.jpg', owners: ['策寶寶❥','紫色瑪姬QQ'], category: '紫' },
-{ name: '紫-淡粉雪柳', image: 'images/紫/紫-淡粉雪柳.jpg', owners: ['策寶寶❥','紫色瑪姬QQ','菲菲'], category: '紫' },
-{ name: '紫-緋色臘梅', image: 'images/紫/紫-緋色臘梅.jpg', owners: ['紫色瑪姬QQ','玩看看','飛寶','菲菲','婲花','策寶寶❥','紫摸懶','紫魚星辰','小魚兒','妖妃庾晚音❥','紫色鬱金香'], category: '紫' },
-{ name: '紫-瑤暉緬梔子', image: 'images/紫/紫-瑤暉緬梔子.jpg', owners: ['魔法師布布','策寶寶❥','菲菲','酥巴拉si ❥'], category: '紫' },
-{ name: '紫-粉米茶梅花', image: 'images/紫/紫-粉米茶梅花.jpg', owners: ['菲菲','策寶寶❥','煥雨','萌新帥底迪❥','紫色鬱金香'], category: '紫' },
-{ name: '紫-粉胭海棠花', image: 'images/紫/紫-粉胭海棠花.jpg', owners: ['策寶寶❥','魔法師布布','菲菲'], category: '紫' },
-{ name: '紫-雲錦芍藥', image: 'images/紫/紫-雲錦芍藥.jpg', owners: ['紫色瑪姬QQ','魔法師布布','策寶寶❥','紫色翅膀','紫色鬱金香','Ki洽納❥','玩看看'], category: '紫' },
-{ name: '紫-胭脂芍藥', image: 'images/紫/紫-胭脂芍藥.jpg', owners: ['妖妃庾晚音❥','紫色翅膀','小魚兒','玩看看'], category: '紫' },
-{ name: '紫-盈粉芍藥', image: 'images/紫/紫-盈粉芍藥.jpg', owners: ['玩看看'], category: '紫' },
-{ name: '紫-桃緋薑荷花', image: 'images/紫/紫-桃緋薑荷花.jpg', owners: ['策寶寶❥','紫色瑪姬QQ','菲菲'], category: '紫' },
-{ name: '紫-白玉薑荷花', image: 'images/紫/紫-白玉薑荷花.jpg', owners: ['萌新帥底迪❥','紫色瑪姬QQ','菲菲','煥雨','策寶寶❥','酥巴拉si ❥'], category: '紫' },
-{ name: '紫-朱紅淩霄花', image: 'images/紫/紫-朱紅淩霄花.jpg', owners: ['策寶寶❥','紫色瑪姬QQ','菲菲'], category: '紫' },
-{ name: '紫-白紫淩霄花', image: 'images/紫/紫-白紫淩霄花.jpg', owners: ['策寶寶❥','紫色瑪姬QQ','煥雨','菲菲'], category: '紫' },
-{ name: '紫-紫晶燈籠花', image: 'images/紫/紫-紫晶燈籠花.jpg', owners: ['策寶寶❥'], category: '紫' },
-{ name: '紫-落霞燈籠花', image: 'images/紫/紫-落霞燈籠花.jpg', owners: ['策寶寶❥'], category: '紫' },
-{ name: '紫-霧粉麥冬花', image: 'images/紫/紫-霧粉麥冬花.jpg', owners: ['妖妃庾晚音❥'], category: '紫' },
-{ name: '紫-霜色麥冬花', image: 'images/紫/紫-霜色麥冬花.jpg', owners: ['策寶寶❥','紫色瑪姬QQ'], category: '紫' },
-{ name: '紫-星耀靈蕊', image: 'images/紫/紫-星耀靈蕊.jpg', owners: ['魔法師布布','婲花','策寶寶❥','婲花','紫色瑪姬QQ','萌新帥底迪❥','酥巴拉si ❥','菲菲'], category: '紫' },
-{ name: '紫-月影搖光', image: 'images/紫/紫-月影搖光.jpg', owners: ['魔法師布布','策寶寶❥','紫色瑪姬QQ','菲菲','紫色鬱金香','萌新帥底迪❥','玩看看'], category: '紫' },
-{ name: '紫-鴛鴦茉莉', image: 'images/紫/紫-鴛鴦茉莉.jpg', owners: ['安太睡❥','紫色的晴晴飛','紫色瑪姬QQ','月月','妖妃庾晚音❥','婲花'], category: '紫' },
-{ name: '紫-玉紫雪割草', image: 'images/紫/紫-玉紫雪割草.jpg', owners: ['魔法師布布','策寶寶❥','酥巴拉si ❥','菲菲'], category: '紫' },
-{ name: '紫-紫苑番紅花', image: 'images/紫/紫-紫苑番紅花.jpg', owners: ['魔法師布布','策寶寶❥'], category: '紫' },
-{ name: '紫-雙輝忍冬', image: 'images/紫/紫-雙輝忍冬.jpg', owners: ['魔法師布布'], category: '紫' },
-{ name: '紫-雅梨黃棣棠', image: 'images/紫/紫-雅梨黃棣棠.jpg', owners: ['酥巴拉si ❥','煥雨','策寶寶❥','萌新帥底迪❥'], category: '紫' },
-{ name: '紫-晴藍耬鬥菜', image: 'images/紫/紫-晴藍耬鬥菜.jpg', owners: [], category: '紫' },
-{ name: '紫-黛紫洋紫荊', image: 'images/紫/紫-黛紫洋紫荊.jpg', owners: ['萌新帥底迪❥','紫色瑪姬QQ','婲花'], category: '紫' },
-{ name: '紫-宮燈百合', image: 'images/紫/紫-宮燈百合.jpg', owners: ['萌新帥底迪❥','婲花','菲菲','紫色瑪姬QQ'], category: '紫' },
-{ name: '紫-熏紫松蟲草', image: 'images/紫/紫-熏紫松蟲草.jpg', owners: ['酥巴拉si ❥','菲菲','紫色瑪姬QQ'], category: '紫' },
-{ name: '紫-粉柔松蟲草', image: 'images/紫/紫-粉柔松蟲草.jpg', owners: ['萌新帥底迪❥','紫色瑪姬QQ'], category: '紫' },
-{ name: '紫-冰藍矮牽牛', image: 'images/紫/紫-冰藍矮牽牛.jpg', owners: ['紫色瑪姬QQ','煥雨','飛寶','玩看看','紫色翅膀','紫色的晴晴飛','月月','策寶寶❥','紫色鬱金香','紫魚星辰','紫摸懶','酥巴拉si ❥','菲菲','婲花','魔法師布布','Ki洽納❥','安太睡❥','小魚兒','萌新帥底迪❥','妖妃庾晚音❥','月月','紫色鬱金香','紫摸懶'], category: '紫' },
-{ name: '紫-伯利恒之星', image: 'images/紫/紫-伯利恒之星.jpg', owners: ['菲菲','煥雨','策寶寶❥','紫摸懶','Ki洽納❥','婲花','月月','小魚兒','魔法師布布','安太睡❥','紫色鬱金香','萌新帥底迪❥','酥巴拉si ❥','玩看看'], category: '紫' },
-{ name: '紫-赤焰火焰蘭', image: 'images/紫/紫-赤焰火焰蘭.jpg', owners: ['婲花','飛寶','酥巴拉si ❥','紫色的晴晴飛','紫色翅膀','Ki洽納❥','紫色瑪姬QQ'], category: '紫' },
-{ name: '紫-輕紫大花蔥', image: 'images/紫/紫-輕紫大花蔥.jpg', owners: ['安太睡❥','煥雨','婲花','策寶寶❥','紫色的晴晴飛','菲菲'], category: '紫' },
-{ name: '紫-幻紫鐵線蓮', image: 'images/紫/紫-幻紫鐵線蓮.jpg', owners: ['菲菲','紫色瑪姬QQ','策寶寶❥','婲花','玩看看'], category: '紫' }, 
-{ name: '紫-香檳玫瑰', image: 'images/紫/紫-香檳玫瑰.jpg', owners: ['魔法師布布','紫摸懶','策寶寶❥','玩看看','婲花','紫魚星辰','菲菲','安太睡❥','妖妃庾晚音❥','Ki洽納❥','紫色瑪姬QQ'], category: '紫' }, 
-{ name: '紫-粉鶴芋', image: 'images/紫/紫-粉鶴芋.jpg', owners: ['紫魚星辰','策寶寶❥','玩看看','菲菲','紫色的晴晴飛','酥巴拉si ❥','婲花','Ki洽納❥'], category: '紫' },
-{ name: '紫-藍葉蘇鐵', image: 'images/紫/紫-藍葉蘇鐵.jpg', owners: ['Ki洽納❥','煥雨','策寶寶❥','紫色的晴晴飛','紫摸懶','玩看看','酥巴拉si ❥','婲花'], category: '紫' },
-{ name: '紫-碧落夾竹桃', image: 'images/紫/紫-碧落夾竹桃.jpg', owners: ['策寶寶❥','紫色瑪姬QQ'], category: '紫' },
-{ name: '藍-丹紫夾竹桃', image: 'images/藍/藍-丹紫夾竹桃.jpg', owners: ['魔法師布布','酥巴拉si ❥'], category: '藍' },
-{ name: '藍-淺粉夾竹桃', image: 'images/藍/藍-淺粉夾竹桃.jpg', owners: ['菲菲','酥巴拉si ❥'], category: '藍' },
-{ name: '藍-明黃矮牽牛', image: 'images/藍/藍-明黃矮牽牛.jpg', owners: ['酥巴拉si ❥','煥雨','飛寶','紫色的晴晴飛','紫色翅膀','策寶寶❥','紫色瑪姬QQ','月月','紫魚星辰','Ki洽納❥','菲菲','婲花','紫摸懶','魔法師布布','安太睡❥','小魚兒','萌新帥底迪❥','妖妃庾晚音❥','月月','紫色鬱金香'], category: '藍' },
-{ name: '藍-淡粉矮牽牛', image: 'images/藍/藍-淡粉矮牽牛.jpg', owners: ['紫色瑪姬QQ','煥雨','飛寶','紫色翅膀','紫色的晴晴飛','策寶寶❥','酥巴拉si ❥','菲菲','紫魚星辰','婲花','紫摸懶','月月','魔法師布布','Ki洽納❥','安太睡❥','小魚兒','萌新帥底迪❥','妖妃庾晚音❥','月月'], category: '藍' },
-{ name: '藍-淺紫落新婦', image: 'images/藍/藍-淺紫落新婦.jpg', owners: ['紫色瑪姬QQ','煥雨','飛寶','紫摸懶','紫魚星辰','策寶寶❥','紫色翅膀','紫色的晴晴飛','紫色鬱金香','月月','菲菲','婲花','魔法師布布','小魚兒','萌新帥底迪❥','妖妃庾晚音❥','酥巴拉si ❥'], category: '藍' },
-{ name: '藍-淺藍落新婦', image: 'images/藍/藍-淺藍落新婦.jpg', owners: ['酥巴拉si ❥','煥雨','飛寶','策寶寶❥','紫色翅膀','紫色的晴晴飛','紫色鬱金香','紫色瑪姬QQ','月月','紫魚星辰','Ki洽納❥','菲菲','婲花','魔法師布布','安太睡❥','小魚兒','萌新帥底迪❥','妖妃庾晚音❥','紫摸懶'], category: '藍' },
-{ name: '藍-水紅落新婦', image: 'images/藍/藍-水紅落新婦.jpg', owners: ['酥巴拉si ❥','煥雨','飛寶','策寶寶❥','紫色翅膀','紫色的晴晴飛','紫色瑪姬QQ','紫色鬱金香','紫魚星辰','月月','Ki洽納❥','菲菲','婲花','紫摸懶','魔法師布布','安太睡❥','小魚兒','萌新帥底迪❥','妖妃庾晚音❥'], category: '藍' },
-{ name: '藍-淡粉馬齒莧', image: 'images/藍/藍-淡粉馬齒莧.jpg', owners: ['紫色瑪姬QQ','煥雨','飛寶','婲花','妖妃庾晚音❥','紫摸懶','紫魚星辰','酥巴拉si ❥','菲菲'], category: '藍' },
-{ name: '藍-白花馬齒莧', image: 'images/藍/藍-白花馬齒莧.jpg', owners: ['酥巴拉si ❥','飛寶','紫魚星辰','菲菲','紫色翅膀','紫色的晴晴飛','策寶寶❥','紫魚星辰','酥巴拉si ❥','婲花','月月','魔法師布布','Ki洽納❥','安太睡❥','小魚兒','萌新帥底迪❥','妖妃庾晚音❥','月月','紫色瑪姬QQ','紫摸懶','萌新帥底迪❥'], category: '藍' },
-{ name: '藍-嫩黃馬齒莧', image: 'images/藍/藍-嫩黃馬齒莧.jpg', owners: ['小魚兒','煥雨','飛寶','紫色鬱金香','紫色翅膀','紫色的晴晴飛','婲花','策寶寶❥','月月','萌新帥底迪❥','紫摸懶','菲菲','紫魚星辰','安太睡❥','Ki洽納❥'], category: '藍' },
-{ name: '藍-明黃垂筒花', image: 'images/藍/藍-明黃垂筒花.jpg', owners: ['菲菲','婲花','煥雨','紫色瑪姬QQ'], category: '藍' },
-{ name: '藍-橘紅垂筒花', image: 'images/藍/藍-橘紅垂筒花.jpg', owners: ['紫摸懶'], category: '藍' },
-{ name: '藍-霜白垂筒花', image: 'images/藍/藍-霜白垂筒花.jpg', owners: ['萌新帥底迪❥','煥雨','紫色鬱金香','婲花','妖妃庾晚音❥'], category: '藍' },
-{ name: '藍-橘紅垂筒花', image: 'images/藍/藍-橘紅垂筒花.jpg', owners: ['紫色瑪姬QQ','飛寶','婲花','萌新帥底迪❥','Ki洽納❥','菲菲'], category: '藍' },
-{ name: '藍-丹紅蜀葵花', image: 'images/藍/藍-丹紅蜀葵花.jpg', owners: ['魔法師布布','策寶寶❥','月月'], category: '藍' },
-{ name: '藍-淡茜蜀葵花', image: 'images/藍/藍-淡茜蜀葵花.jpg', owners: ['Ki洽納❥','煥雨','飛寶','策寶寶❥','紫色翅膀','紫色瑪姬QQ','月月','紫色鬱金香','菲菲','魔法師布布','小魚兒','萌新帥底迪❥','妖妃庾晚音❥'], category: '藍' },
-{ name: '藍-金盞蜀葵花', image: 'images/藍/藍-金盞蜀葵花.jpg', owners: ['菲菲'], category: '藍' },
-{ name: '藍-淺橘乒乓菊', image: 'images/藍/藍-淺橘乒乓菊.jpg', owners: ['紫色鬱金香','煥雨','飛寶','策寶寶❥','紫色翅膀','紫色的晴晴飛','酥巴拉si ❥','紫色瑪姬QQ','月月','紫魚星辰','菲菲','婲花','紫摸懶','魔法師布布','Ki洽納❥','安太睡❥','小魚兒','萌新帥底迪❥','妖妃庾晚音❥'], category: '藍' },
-{ name: '藍-淺白乒乓菊', image: 'images/藍/藍-淺白乒乓菊.jpg', owners: ['酥巴拉si ❥','煥雨','飛寶','策寶寶❥','紫色翅膀','紫色的晴晴飛','紫色鬱金香','紫色瑪姬QQ','月月','菲菲','紫魚星辰','婲花','紫摸懶','魔法師布布','Ki洽納❥','安太睡❥','小魚兒','萌新帥底迪❥','妖妃庾晚音❥'], category: '藍' },
-{ name: '藍-淺粉乒乓菊', image: 'images/藍/藍-淺粉乒乓菊.jpg', owners: ['紫色瑪姬QQ','煥雨','飛寶','策寶寶❥','紫色翅膀','紫色的晴晴飛','酥巴拉si ❥','菲菲','月月','婲花','紫魚星辰','紫摸懶','魔法師布布','Ki洽納❥','安太睡❥','小魚兒','萌新帥底迪❥','妖妃庾晚音❥','月月','紫色鬱金香'], category: '藍' },
-{ name: '藍-白色滿天星', image: 'images/藍/藍-白色滿天星.jpg', owners: [], category: '藍' },
-{ name: '藍-粉色滿天星', image: 'images/藍/藍-粉色滿天星.jpg', owners: ['月月','紫魚星辰','魔法師布布'], category: '藍' },
-{ name: '藍-藍色滿天星', image: 'images/藍/藍-藍色滿天星.jpg', owners: ['菲菲'], category: '藍' },
-{ name: '藍-玫紅非洲堇', image: 'images/藍/藍-玫紅非洲堇.jpg', owners: ['紫色瑪姬QQ','魔法師布布'], category: '藍' },
-{ name: '藍-淡粉非洲菫', image: 'images/藍/藍-淡粉非洲菫.jpg', owners: ['Ki洽納❥'], category: '藍' },
-{ name: '藍-輕紫非洲菫', image: 'images/藍/藍-輕紫非洲菫.jpg', owners: ['策寶寶❥'], category: '藍' },
-{ name: '藍-桃夭賈桂琳', image: 'images/藍/藍-桃夭賈桂琳.jpg', owners: ['小魚兒','紫色瑪姬QQ','策寶寶❥','萌新帥底迪❥'], category: '藍' },  
-{ name: '藍-緋雪賈桂琳', image: 'images/藍/藍-緋雪賈桂琳.jpg', owners: ['妖妃庾晚音❥','紫色瑪姬QQ','萌新帥底迪❥'], category: '藍' },
-{ name: '藍-碧落賈桂琳', image: 'images/藍/藍-碧落賈桂琳.jpg', owners: ['小魚兒','紫色瑪姬QQ','煥雨','婲花','策寶寶❥','酥巴拉si ❥','安太睡❥','菲菲'], category: '藍' },
-{ name: '藍-橙黃君子蘭', image: 'images/藍/藍-橙黃君子蘭.jpg', owners: ['萌新帥底迪❥','紫色鬱金香','菲菲','安太睡❥'], category: '藍' },
-{ name: '藍-粉白君子蘭', image: 'images/藍/藍-粉白君子蘭.jpg', owners: ['萌新帥底迪❥','菲菲','妖妃庾晚音❥','紫魚星辰','安太睡❥'], category: '藍' },
-{ name: '藍-嫩黃君子蘭', image: 'images/藍/藍-嫩黃君子蘭.jpg', owners: ['萌新帥底迪❥','菲菲','妖妃庾晚音❥','紫魚星辰','安太睡❥','酥巴拉si ❥'], category: '藍' },   
-{ name: '藍-薰紫香豌豆', image: 'images/藍/藍-薰紫香豌豆.jpg', owners: ['紫色翅膀','煥雨','飛寶','紫色的晴晴飛','紫魚星辰','Ki洽納❥','萌新帥底迪❥','菲菲','酥巴拉si ❥','妖妃庾晚音❥','紫色瑪姬QQ'], category: '藍' },
-{ name: '藍-夢藍香豌豆', image: 'images/藍/藍-夢藍香豌豆.jpg', owners: ['小魚兒','婲花','策寶寶❥','月月','萌新帥底迪❥','紫色瑪姬QQ','菲菲'], category: '藍' },
-{ name: '藍-霧白香豌豆', image: 'images/藍/藍-霧白香豌豆.jpg', owners: ['妖妃庾晚音❥','策寶寶❥','紫色翅膀','紫色的晴晴飛','紫魚星辰','紫色瑪姬QQ','菲菲','小魚兒','安太睡❥','萌新帥底迪❥','Ki洽納❥'], category: '藍' },
-{ name: '藍-素雪玉簪花', image: 'images/藍/藍-素雪玉簪花.jpg', owners: ['萌新帥底迪❥'], category: '藍' },
-{ name: '藍-紫晶玉簪花', image: 'images/藍/藍-紫晶玉簪花.jpg', owners: ['Ki洽納❥','飛寶','紫色的晴晴飛','紫色翅膀','魔法師布布','紫魚星辰','安太睡❥','小魚兒','妖妃庾晚音❥','萌新帥底迪❥'], category: '藍' },
-{ name: '藍-霜藍玉簪花', image: 'images/藍/藍-霜藍玉簪花.jpg', owners: ['Ki洽納❥','紫魚星辰','妖妃庾晚音❥'], category: '藍' },
-{ name: '藍-粉矢車菊', image: 'images/藍/藍-粉矢車菊.jpg', owners: ['酥巴拉si ❥','煥雨','飛寶','紫色的晴晴飛','紫色翅膀','策寶寶❥','月月','紫魚星辰','Ki洽納❥','菲菲','婲花','魔法師布布','紫摸懶','安太睡❥','小魚兒','萌新帥底迪❥','妖妃庾晚音❥','紫色瑪姬QQ'], category: '藍' },
-{ name: '藍-紫矢車菊', image: 'images/藍/藍-紫矢車菊.jpg', owners: ['紫色鬱金香','煥雨','飛寶','紫色的晴晴飛','紫色翅膀','策寶寶❥','酥巴拉si ❥','紫魚星辰','紫色瑪姬QQ','月月','Ki洽納❥','菲菲','婲花','紫摸懶','魔法師布布','安太睡❥','小魚兒','萌新帥底迪❥','妖妃庾晚音❥'], category: '藍' },
-{ name: '藍-藍矢車菊', image: 'images/藍/藍-藍矢車菊.jpg', owners: ['菲菲','飛寶','月月','紫色翅膀','紫色的晴晴飛','小魚兒','萌新帥底迪❥','妖妃庾晚音❥','紫色瑪姬QQ'], category: '藍' },
-{ name: '藍-淺粉婆婆納', image: 'images/藍/藍-淺粉婆婆納.jpg', owners: ['策寶寶❥','飛寶','萌新帥底迪❥','酥巴拉si ❥','紫摸懶','Ki洽納❥','婲花','小魚兒','安太睡❥','魔法師布布','菲菲'], category: '藍' },
-{ name: '藍-星藍婆婆納', image: 'images/藍/藍-星藍婆婆納.jpg', owners: ['妖妃庾晚音❥','飛寶','小魚兒','紫色的晴晴飛','紫色翅膀','策寶寶❥','月月','紫魚星辰','酥巴拉si ❥','紫摸懶','婲花','Ki洽納❥','萌新帥底迪❥','菲菲','安太睡❥','紫色瑪姬QQ'], category: '藍' },
-{ name: '藍-霜白婆婆納', image: 'images/藍/藍-霜白婆婆納.jpg', owners: ['酥巴拉si ❥','煥雨','婲花','妖妃庾晚音❥','紫魚星辰','紫色瑪姬QQ'], category: '藍' },
-{ name: '藍-盈粉翠珠', image: 'images/藍/藍-盈粉翠珠.jpg', owners: [], category: '藍' },
-{ name: '藍-輕紫翠珠', image: 'images/藍/藍-輕紫翠珠.jpg', owners: ['萌新帥底迪❥','菲菲'], category: '藍' },
-{ name: '藍-銀白翠珠', image: 'images/藍/藍-銀白翠珠.jpg', owners: ['萌新帥底迪❥'], category: '藍' },
-{ name: '藍-黃白酢漿草', image: 'images/藍/藍-黃白酢漿草.jpg', owners: ['菲菲','策寶寶❥','魔法師布布','萌新帥底迪❥','紫色瑪姬QQ'], category: '藍' },
-{ name: '藍-橙黃酢漿草', image: 'images/藍/藍-橙黃酢漿草.jpg', owners: ['魔法師布布','策寶寶❥','紫色翅膀','紫色的晴晴飛','紫魚星辰','小魚兒','妖妃庾晚音❥','Ki洽納❥','萌新帥底迪❥'], category: '藍' },
-{ name: '藍-粉白酢漿草', image: 'images/藍/藍-粉白酢漿草.jpg', owners: ['婲花','策寶寶❥','菲菲','魔法師布布','安太睡❥','小魚兒','萌新帥底迪❥','Ki洽納❥','紫色瑪姬QQ'], category: '藍' },
-{ name: '藍-鵝黃報春花', image: 'images/藍/藍-鵝黃報春花.jpg', owners: ['酥巴拉si ❥','策寶寶❥','紫色翅膀','紫魚星辰','魔法師布布','Ki洽納❥','安太睡❥','小魚兒','萌新帥底迪❥','妖妃庾晚音❥'], category: '藍' },
-{ name: '藍-絳紅報春花', image: 'images/藍/藍-絳紅報春花.jpg', owners: ['魔法師布布','策寶寶❥','安太睡❥','萌新帥底迪❥'], category: '藍' },
-{ name: '藍-桃粉報春花', image: 'images/藍/藍-桃粉報春花.jpg', owners: ['Ki洽納❥','紫魚星辰','妖妃庾晚音❥'], category: '藍' },
-{ name: '藍-杏黃杜鵑', image: 'images/藍/藍-杏黃杜鵑.jpg', owners: [], category: '藍' },
-{ name: '藍-嫣紅杜鵑', image: 'images/藍/藍-嫣紅杜鵑.jpg', owners: ['小魚兒','紫色瑪姬QQ','菲菲'], category: '藍' },
-{ name: '藍-紫紅杜鵑', image: 'images/藍/藍-紫紅杜鵑.jpg', owners: ['魔法師布布','紫色瑪姬QQ','萌新帥底迪❥','飛寶'], category: '藍' },  
-{ name: '藍-杏白忘憂草', image: 'images/藍/藍-杏白忘憂草.jpg', owners: ['妖妃庾晚音❥'], category: '藍' },
-{ name: '藍-輕紫忘憂草', image: 'images/藍/藍-輕紫忘憂草.jpg', owners: [], category: '藍' },
-{ name: '藍-黃色海棠花', image: 'images/藍/藍-黃色海棠花.jpg', owners: [], category: '藍' },
-{ name: '藍-橘紅海棠花', image: 'images/藍/藍-橘紅海棠花.jpg', owners: ['魔法師布布','飛寶'], category: '藍' },
-{ name: '藍-蜜黃針墊花', image: 'images/藍/藍-蜜黃針墊花.jpg', owners: ['紫色瑪姬QQ','萌新帥底迪❥'], category: '藍' },
-{ name: '藍-火焰針墊花', image: 'images/藍/藍-火焰針墊花.jpg', owners: ['紫色瑪姬QQ'], category: '藍' },
-{ name: '藍-白鶴芋', image: 'images/藍/藍-白鶴芋.jpg', owners: ['紫色瑪姬QQ','煥雨','飛寶','策寶寶❥','紫色翅膀','紫色的晴晴飛','酥巴拉si ❥','菲菲','紫摸懶','月月','紫魚星辰','魔法師布布','Ki洽納❥','安太睡❥','萌新帥底迪❥','妖妃庾晚音❥','小魚兒','婲花','月月'], category: '藍' },
-{ name: '藍-紅鶴芋', image: 'images/藍/藍-紅鶴芋.jpg', owners: ['酥巴拉si ❥','煥雨','飛寶','菲菲','紫色鬱金香','紫色翅膀','紫色的晴晴飛','策寶寶❥','婲花','月月','紫摸懶','紫魚星辰','魔法師布布','Ki洽納❥','安太睡❥','萌新帥底迪❥','妖妃庾晚音❥','小魚兒','月月','紫色瑪姬QQ'], category: '藍' },
-{ name: '藍-薄藤鐵線蓮', image: 'images/藍/藍-薄藤鐵線蓮.jpg', owners: ['酥巴拉si ❥','煥雨','飛寶','紫色鬱金香','策寶寶❥','紫色翅膀','紫色的晴晴飛','紫色瑪姬QQ','月月','紫魚星辰','Ki洽納❥','菲菲','婲花','魔法師布布','安太睡❥','小魚兒','萌新帥底迪❥','妖妃庾晚音❥','紫摸懶'], category: '藍' },
-{ name: '藍-霞粉鐵線蓮', image: 'images/藍/藍-霞粉鐵線蓮.jpg', owners: ['妖妃庾晚音❥','煥雨','飛寶','策寶寶❥','小魚兒','萌新帥底迪❥','安太睡❥','紫色翅膀','紫色的晴晴飛'], category: '藍' },
-{ name: '藍-忽地笑', image: 'images/藍/藍-忽地笑.jpg', owners: ['酥巴拉si ❥','飛寶','菲菲','紫色的晴晴飛','紫色翅膀','紫摸懶','小魚兒','妖妃庾晚音❥','紫色瑪姬QQ'], category: '藍' },
-{ name: '藍-鳳梨花', image: 'images/藍/藍-鳳梨花.jpg', owners: ['酥巴拉si ❥','煥雨','飛寶','策寶寶❥','紫色翅膀','紫色的晴晴飛','紫色鬱金香','紫色瑪姬QQ','月月','紫魚星辰','Ki洽納❥','菲菲','婲花','魔法師布布','安太睡❥','小魚兒','萌新帥底迪❥','妖妃庾晚音❥','紫摸懶'], category: '藍' },
-{ name: '藍-迎春花', image: 'images/藍/藍-迎春花.jpg', owners: ['酥巴拉si ❥','煥雨','飛寶','策寶寶❥','紫色鬱金香','紫色翅膀','紫色的晴晴飛','紫色瑪姬QQ','月月','紫魚星辰','Ki洽納❥','魔法師布布','安太睡❥','小魚兒','萌新帥底迪❥','妖妃庾晚音❥','婲花','菲菲','月月','紫摸懶'], category: '藍' },
-{ name: '藍-霧粉千鳥花', image: 'images/藍/藍-霧粉千鳥花.jpg', owners: ['魔法師布布'], category: '藍' },
-{ name: '藍-正紅大麗花', image: 'images/藍/藍-正紅大麗花.jpg', owners: ['Ki洽納❥','飛寶','策寶寶❥','紫色翅膀','紫摸懶','魔法師布布','紫魚星辰','小魚兒','妖妃庾晚音❥','婲花','菲菲','萌新帥底迪❥'], category: '藍' },
-{ name: '藍-殷紅燈籠花', image: 'images/藍/藍-殷紅燈籠花.jpg', owners: ['妖妃庾晚音❥','紫色瑪姬QQ','飛寶'], category: '藍' },
-{ name: '藍-聖誕一品紅', image: 'images/藍/藍-聖誕一品紅.jpg', owners: ['策寶寶❥','紫色的晴晴飛','小魚兒','萌新帥底迪❥'], category: '藍' },
-{ name: '藍-安眠薰衣草', image: 'images/藍/藍-安眠薰衣草.jpg', owners: ['菲菲','紫色的晴晴飛','婲花','Ki洽納❥','酥巴拉si ❥','紫魚星辰','萌新帥底迪❥','紫色瑪姬QQ','月月'], category: '藍' },
-{ name: '藍-月白格桑花', image: 'images/藍/藍-月白格桑花.jpg', owners: ['小魚兒','飛寶'], category: '藍' },
-{ name: '藍-紫麥冬花', image: 'images/藍/藍-紫麥冬花.jpg', owners: ['魔法師布布','紫色瑪姬QQ'], category: '藍' },
-{ name: '藍-綠葉蘇鐵', image: 'images/藍/藍-綠葉蘇鐵.jpg', owners: ['妖妃庾晚音❥','萌新帥底迪❥','紫色的晴晴飛','婲花'], category: '藍' },
-{ name: '藍-薄粉蕙蘭', image: 'images/藍/藍-薄粉蕙蘭.jpg', owners: ['婲花','飛寶','策寶寶❥','紫色翅膀','魔法師布布','紫摸懶','紫魚星辰','安太睡❥','小魚兒','萌新帥底迪❥','妖妃庾晚音❥','菲菲'], category: '藍' },
-{ name: '藍-金鐘連翹', image: 'images/藍/藍-金鐘連翹.jpg', owners: ['婲花','飛寶','策寶寶❥','菲菲','紫色翅膀','紫摸懶','魔法師布布','紫魚星辰','安太睡❥','小魚兒','妖妃庾晚音❥','紫色瑪姬QQ','萌新帥底迪❥'], category: '藍' },
-{ name: '藍-香水百合', image: 'images/藍/藍-香水百合.jpg', owners: ['紫色瑪姬QQ','煥雨','飛寶','策寶寶❥','紫色翅膀','紫色的晴晴飛','紫摸懶','酥巴拉si ❥','月月','紫魚星辰','菲菲','魔法師布布','Ki洽納❥','安太睡❥','小魚兒','萌新帥底迪❥','妖妃庾晚音❥','婲花','月月','紫摸懶'], category: '藍' },
-{ name: '藍-富貴竹', image: 'images/藍/藍-富貴竹.jpg', owners: ['萌新帥底迪❥','婲花','煥雨','紫魚星辰','紫色瑪姬QQ','菲菲','紫摸懶','妖妃庾晚音❥'], category: '藍' },
-{ name: '藍-霜白穀鳶尾', image: 'images/藍/藍-霜白穀鳶尾.jpg', owners: ['萌新帥底迪❥'], category: '藍' },
+const API_URL = "https://script.google.com/macros/s/AKfycbyT64IkZksYdYkLHFXiZu22AIV5yew5q3JuZJuRrnTp8_Iy9vVl7Jh9efFfH2G3voT8/exec";
+const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/chenyanting0814-gif/-/main/";
 
+let db = [];
+let users = {};
+let currentUser = null;
+let currentFilterType = 'all'; 
+let currentFilterVal = 'all';
 
-  
+async function init() {
+    try {
+        const res = await fetch(API_URL, { redirect: "follow" });
+        const data = await res.json();
+        
+        users = {};
+        data.members.slice(1).forEach(row => {
+            if(row[0]) users[row[0].toString().trim()] = row[1].toString().trim();
+        });
+        
+        db = data.flowers.slice(1).map(row => ({
+            name: row[0] ? row[0].toString().trim() : "",
+            category: row[1] ? row[1].toString().trim() : "紅",
+            image: row[2] ? row[2].toString().trim() : "", 
+            owners: row[3] ? row[3].toString().split(',').map(o=>o.trim()).filter(o=>o!=='') : []
+        }));
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-
-
-
-  
-  
-  
- 
-  
-];
-
-// ===== 狀態 =====
-let selectedFriend = null;
-let currentCategory = '全部';
-
-// ===== 統計每人花數 =====
-function getFriendStats() {
-  const stats = {};
-  flowers.forEach(f => {
-    [...new Set(f.owners)].forEach(o => {
-      stats[o] = (stats[o] || 0) + 1;
-    });
-  });
-  return stats;
+        setupCategoryButtons();
+        document.getElementById('loading').style.display = 'none';
+        render();
+    } catch (error) {
+        document.getElementById('loadingMsg').innerHTML = `<span style="color:red">連線失敗！</span>`;
+    }
 }
 
-// ===== 好友清單 =====
-const friendsBox = document.getElementById('friendsBox');
-
-function renderFriends() {
-  friendsBox.innerHTML = '<strong>好友：</strong>';
-  const stats = getFriendStats();
-
-  Object.entries(stats)
-    .sort((a, b) => b[1] - a[1])
-    .forEach(([name, count]) => {
-      const span = document.createElement('span');
-      span.textContent = `${name}（${count}）`;
-      if (selectedFriend === name) span.classList.add('active');
-      span.onclick = () => selectFriend(name);
-      friendsBox.appendChild(span);
+function setupCategoryButtons() {
+    const bar = document.getElementById('categoryFilters');
+    const categories = [...new Set(db.map(f => f.category))];
+    categories.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-btn';
+        btn.innerText = cat;
+        btn.onclick = (e) => filterBy('category', cat, e.target);
+        bar.appendChild(btn);
     });
 }
 
-// ===== 顯示花 =====
-const flowersBox = document.getElementById('flowers');
-
-function displayFlowers(category) {
-  flowersBox.innerHTML = '';
-
-  flowers.forEach(flower => {
-    if (category !== '全部' && flower.category !== category) return;
-    if (selectedFriend && !flower.owners.includes(selectedFriend)) return;
-
-    const div = document.createElement('div');
-    div.className = 'flower';
-    div.innerHTML = `
-      <img src="${flower.image}">
-      <div>${flower.name}</div>
-      <div class="tag">${flower.category}</div>
-    `;
-    div.onclick = () => showFlowerPopup(flower);
-    flowersBox.appendChild(div);
-  });
+function filterBy(type, val, btn) {
+    currentFilterType = type;
+    currentFilterVal = val;
+    document.querySelectorAll('.filter-btn, .user-filter-btn').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    render();
 }
 
-// ===== 好友篩選 =====
-function selectFriend(name) {
-  selectedFriend = (selectedFriend === name) ? null : name;
-  displayFlowers(currentCategory);
-  updateFilterStatus();
-  renderFriends();
+function render() {
+    const box = document.getElementById('flowers');
+    box.innerHTML = '';
+    
+    let filtered = db;
+    if(currentFilterType === 'category') filtered = db.filter(f => f.category === currentFilterVal);
+    else if(currentFilterType === 'user') filtered = db.filter(f => f.owners.includes(currentFilterVal));
+
+    filtered.forEach(f => {
+        const div = document.createElement('div');
+        const isOwned = currentUser && f.owners.includes(currentUser);
+        
+        // 只有在登入且「非管理員」狀態下，才會顯示灰階/彩色對比
+        div.className = 'flower' + (currentUser && currentUser !== 'admin' ? (isOwned ? ' owned' : ' not-owned') : ' owned');
+        
+        // --- 圖片邏輯 (沿用你剛才成功的邏輯) ---
+        let imgUrl = "";
+        const cat = f.category;
+        const name = f.name;
+        if (f.image && f.image.startsWith("http")) {
+            imgUrl = f.image;
+        } else {
+            const fileName = f.image ? f.image : `${cat}-${name}`;
+            const fullPath = `images/${cat}/${fileName}.jpg`;
+            imgUrl = GITHUB_RAW_BASE + encodeURI(fullPath);
+        }
+        
+        div.innerHTML = `
+            <img src="${imgUrl}" onerror="this.src='https://placehold.co/140?text=圖片錯誤\n${cat}-${name}'">
+            <div class="flower-name">${name}</div>
+        `;
+        
+        div.onclick = async () => {
+            if (currentUser && currentUser !== 'admin') {
+                const idx = f.owners.indexOf(currentUser);
+                if (idx > -1) f.owners.splice(idx, 1);
+                else f.owners.push(currentUser);
+                
+                const sBtn = document.getElementById('saveBtn');
+                sBtn.classList.add('changed');
+                sBtn.innerText = "⚠️ 尚未儲存變動";
+                
+                render();
+                syncToCloud("updateOwners", { flowerName: f.name, newOwners: f.owners.join(',') });
+            } else {
+                alert(`花名：${name}\n分類：${cat}\n收藏者：${f.owners.join('、') || '暫無'}`);
+            }
+        };
+        box.appendChild(div);
+    });
+
+    updateSidebar();
 }
 
-// ===== 分類 =====
-function selectCategory(category) {
-  currentCategory = category;
-  displayFlowers(category);
-  updateFilterStatus();
+function updateSidebar() {
+    const list = document.getElementById('userList');
+    list.innerHTML = '';
+    let stats = {};
+    db.forEach(f => f.owners.forEach(o => stats[o] = (stats[o]||0)+1));
+    
+    Object.entries(stats).sort((a,b)=>b[1]-a[1]).forEach(([n, c]) => {
+        const btn = document.createElement('div');
+        btn.className = 'user-filter-btn' + (currentFilterType === 'user' && currentFilterVal === n ? ' active' : '');
+        btn.innerHTML = `<span>${n}</span> <span class="user-count">${c} 朵</span>`;
+        btn.onclick = () => filterBy('user', n, btn);
+        list.appendChild(btn);
+    });
 }
 
-// ===== 狀態顯示 =====
-function updateFilterStatus() {
-  document.getElementById('filterStatus').textContent =
-    selectedFriend ? `目前顯示：${selectedFriend} 的花` : `目前顯示：${currentCategory}`;
+function login() {
+    const u = document.getElementById('uIn').value.trim();
+    const p = document.getElementById('pIn').value.trim();
+    if(users[u] === p) {
+        currentUser = u;
+        document.getElementById('loginArea').style.display = 'none';
+        document.getElementById('userArea').style.display = 'block';
+        document.getElementById('welcomeTxt').innerText = "Hi, " + u;
+        if(u === 'admin') document.getElementById('adminPanel').style.display = 'block';
+        else document.getElementById('saveBtn').style.display = 'block';
+        showToast("登入成功", "var(--main)");
+        render();
+    } else { showToast("帳密錯誤", "var(--error)"); }
 }
 
-// ===== Popup（花） =====
-const popupContent = document.getElementById('popupContent');
-const overlay = document.getElementById('overlay');
-const popup = document.getElementById('popup');
-
-function showFlowerPopup(flower) {
-  popupContent.innerHTML = `
-    <h3>${flower.name}</h3>
-    <img src="${flower.image}">
-    <p>擁有人：${flower.owners.length ? flower.owners.join('、') : '沒有人擁有'}</p>
-  `;
-  overlay.style.display = 'block';
-  popup.style.display = 'block';
+async function syncToCloud(type, payload) {
+    try {
+        await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type, ...payload }) });
+    } catch (e) { console.error("同步失敗", e); }
 }
 
-function closePopup() {
-  overlay.style.display = 'none';
-  popup.style.display = 'none';
+async function manualSync() {
+    const btn = document.getElementById('saveBtn');
+    btn.innerText = "⏳ 儲存中...";
+    btn.disabled = true;
+    try {
+        const promises = db.map(f => fetch(API_URL, { 
+            method: "POST", mode: "no-cors", 
+            body: JSON.stringify({ type: "updateOwners", flowerName: f.name, newOwners: f.owners.join(',') }) 
+        }));
+        await Promise.all(promises);
+        btn.classList.remove('changed');
+        btn.innerText = "💾 儲存目前進度";
+        showToast("存檔成功！", "var(--success)");
+    } catch (e) { showToast("存檔失敗", "var(--error)"); }
+    finally { btn.disabled = false; }
 }
 
-// ===== 初始化 =====
-renderFriends();
-displayFlowers('全部');
-updateFilterStatus();
+async function addM() {
+    const n = document.getElementById('mN').value.trim();
+    const p = document.getElementById('mP').value.trim();
+    if(n && p) {
+        users[n] = p;
+        await syncToCloud("addMember", { username: n, password: p });
+        showToast("成員已新增", "var(--success)");
+    }
+}
+
+async function addF() {
+    const n = document.getElementById('fN').value.trim();
+    const c = document.getElementById('fC').value.trim();
+    if(n) {
+        db.push({ name: n, category: c, image: "", owners: [] });
+        render();
+        await syncToCloud("addFlower", { name: n, category: c, image: "" });
+        showToast("花朵建檔成功", "var(--success)");
+    }
+}
+
+function showToast(m, c) {
+    const t = document.getElementById('toast');
+    t.innerText = m; t.style.background = c; t.style.display = 'block';
+    setTimeout(() => t.style.display='none', 2000);
+}
+
+init();
 </script>
-
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
