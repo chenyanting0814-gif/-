@@ -8,54 +8,48 @@
         :root { --main: #6a5acd; --bg: #f5f5f7; --success: #27ae60; --error: #e74c3c; --dark: #2c3e50; }
         body { font-family: "Microsoft JhengHei", sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; background: var(--bg); color: #333; }
         
-        /* 頂部管理列 */
         .admin-bar { position: fixed; top: 0; width: 100%; height: 50px; background: var(--dark); color: white; display: flex; align-items: center; padding: 0 10px; z-index: 1000; box-sizing: border-box; justify-content: space-between; }
         .admin-bar input { width: 65px; font-size: 11px; padding: 4px; border-radius: 4px; border: none; margin: 0 2px; }
         .admin-bar button { background: var(--main); color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; }
 
         .main-content { flex: 1; padding: 60px 8px 80px; overflow-y: auto; box-sizing: border-box; }
         
-        /* 管理控制台樣式 */
-        #adminPanel { display: none; background: white; padding: 10px; border: 2px solid var(--main); border-radius: 8px; margin-bottom: 12px; font-size: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .admin-row { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 5px; align-items: center; }
-        #adminPanel input { border: 1px solid #ccc; width: 80px; }
+        #adminPanel { display: none; background: white; padding: 10px; border: 2px solid var(--main); border-radius: 8px; margin-bottom: 12px; font-size: 12px; }
+        .admin-row { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 8px; align-items: center; }
 
         .filter-bar { margin-bottom: 12px; background: white; padding: 8px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .filter-group { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 13px; margin-bottom: 5px; }
         .filter-btn { padding: 4px 10px; border-radius: 12px; border: 1.5px solid var(--main); background: transparent; color: var(--main); font-size: 11px; cursor: pointer; font-weight: bold; }
         .filter-btn.active { background: var(--main); color: white; }
-        .member-select { padding: 4px; border-radius: 6px; border: 1.5px solid var(--main); font-size: 12px; color: var(--main); font-weight: bold; outline: none; }
+        .member-select { padding: 4px; border-radius: 6px; border: 1.5px solid var(--main); font-size: 12px; color: var(--main); font-weight: bold; }
 
-        /* 花牆 */
         #flowers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-        .flower { background: white; padding: 5px; border-radius: 8px; text-align: center; cursor: pointer; border: 2px solid transparent; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .flower { background: white; padding: 5px; border-radius: 8px; text-align: center; cursor: pointer; border: 2.5px solid transparent; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; }
         .flower img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 5px; background: #eee; }
         .flower-name { font-size: 10px; font-weight: bold; margin-top: 3px; height: 24px; overflow: hidden; display: flex; align-items: center; justify-content: center; line-height: 1.1; }
         
         .flower.not-owned { opacity: 0.3; filter: grayscale(100%); }
         .flower.owned { opacity: 1; border-color: var(--main); }
 
-        /* 側邊欄：手機版隱藏 */
         .sidebar { width: 180px; padding: 60px 15px 20px; background: white; border-left: 1px solid #ddd; overflow-y: auto; box-sizing: border-box; flex-shrink: 0; }
         .sidebar h4 { font-size: 14px; margin: 0 0 10px; text-align: center; color: var(--main); border-bottom: 1px solid #eee; padding-bottom: 5px; }
-        .rank-item { padding: 10px 5px; border-bottom: 1px solid #f2f2f2; display: flex; justify-content: space-between; font-size: 13px; }
+        .rank-item { padding: 8px 5px; border-bottom: 1px solid #f2f2f2; display: flex; justify-content: space-between; font-size: 12px; }
 
-        /* 儲存鈕 */
-        #saveBtn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 130px; padding: 12px; background: var(--success); color: white; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 2000; display: none; text-align: center; }
+        #saveBtn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 130px; padding: 12px; background: var(--success); color: white; border: none; border-radius: 50px; font-weight: bold; z-index: 2000; display: none; text-align: center; }
         #saveBtn.changed { background: #f39c12; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.05); } }
 
         #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 9999; }
 
         @media (max-width: 768px) {
-            .sidebar { display: none; }
+            .sidebar { display: none !important; }
             #flowers { grid-template-columns: repeat(4, 1fr); }
         }
     </style>
 </head>
 <body>
 
-<div id="loading">🌸 正在載入花房...</div>
+<div id="loading">🌸 資料傳輸中...</div>
 
 <div class="admin-bar">
     <div id="loginArea">
@@ -70,16 +64,10 @@
 <div class="main-content">
     <div id="adminPanel">
         <div class="admin-row">
-            <strong>👥 成員:</strong>
-            <input type="text" id="mN" placeholder="名稱">
-            <input type="text" id="mP" placeholder="密碼">
-            <button onclick="addM()">新增</button>
+            <strong>👥 成員:</strong> <input type="text" id="mN"> <input type="text" id="mP"> <button onclick="addM()">新增</button>
         </div>
         <div class="admin-row">
-            <strong>🌸 花朵:</strong>
-            <input type="text" id="fN" placeholder="花名">
-            <input type="text" id="fC" placeholder="顏色" style="width:40px">
-            <button onclick="addF()">建檔</button>
+            <strong>🌸 花朵:</strong> <input type="text" id="fN"> <input type="text" id="fC"> <button onclick="addF()">建檔</button>
         </div>
     </div>
 
@@ -99,7 +87,7 @@
 </div>
 
 <div class="sidebar">
-    <h4>📊 收集清單</h4>
+    <h4>📊 收集排行榜</h4>
     <div id="userList"></div>
 </div>
 
@@ -133,13 +121,9 @@ async function init() {
 function setupInterface() {
     const select = document.getElementById('memberSelect');
     select.innerHTML = '<option value="all">顯示全部</option>';
-    Object.keys(users).forEach(u => {
-        if(u !== 'admin') {
-            const opt = document.createElement('option');
-            opt.value = u; opt.innerText = u;
-            select.appendChild(opt);
-        }
-    });
+    Object.keys(users).forEach(u => { if(u !== 'admin') {
+        const opt = document.createElement('option'); opt.value = u; opt.innerText = u; select.appendChild(opt);
+    }});
     const catBar = document.getElementById('categoryFilters');
     catBar.innerHTML = '<strong>分類：</strong><button class="filter-btn active" id="btn-all" onclick="filterBy(\'all\', \'all\', this)">全部</button>';
     [...new Set(db.map(f => f.category))].forEach(cat => {
@@ -148,19 +132,8 @@ function setupInterface() {
     });
 }
 
-function filterByMember(name) {
-    if(name === 'all') filterBy('all', 'all', document.getElementById('btn-all'));
-    else filterBy('user', name, null);
-}
-
-function filterBy(type, val, btn) {
-    currentFilterType = type; currentFilterVal = val;
-    if(btn) {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-    }
-    render();
-}
+function filterByMember(n) { if(n==='all') filterBy('all','all',document.getElementById('btn-all')); else filterBy('user',n,null); }
+function filterBy(t,v,b) { currentFilterType=t; currentFilterVal=v; if(b){ document.querySelectorAll('.filter-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); } render(); }
 
 function render() {
     const box = document.getElementById('flowers'); box.innerHTML = '';
@@ -173,27 +146,23 @@ function render() {
         const isOwned = currentUser && f.owners.includes(currentUser);
         div.className = 'flower' + (currentUser && currentUser !== 'admin' ? (isOwned ? ' owned' : ' not-owned') : ' owned');
         
-        let imgUrl = "";
-        if (f.image && f.image.startsWith("http")) {
-            imgUrl = f.image;
-        } else {
-            const fileName = f.image ? f.image : `${f.category}-${f.name}`;
-            const fullPath = `images/${f.category}/${fileName}.jpg`;
-            imgUrl = GITHUB_RAW_BASE + encodeURI(fullPath);
-        }
+        let imgUrl = f.image.startsWith("http") ? f.image : GITHUB_RAW_BASE + encodeURI(`images/${f.category}/${f.image||f.category+'-'+f.name}.jpg`);
         
         div.innerHTML = `<img src="${imgUrl}" onerror="this.src='https://placehold.co/100?text=無圖片'"><div class="flower-name">${f.name}</div>`;
         
         div.onclick = async () => {
+            // 彈窗顯示誰擁有（不論身分都顯示）
+            const ownerList = f.owners.length > 0 ? f.owners.join('、') : '暫無人擁有';
+            alert(`🌸【${f.name}】\n👥 收集者：${ownerList}`);
+            
+            // 如果是一般成員，彈窗後自動切換自己的狀態
             if (currentUser && currentUser !== 'admin') {
                 const idx = f.owners.indexOf(currentUser);
                 if (idx > -1) f.owners.splice(idx, 1); else f.owners.push(currentUser);
-                const sBtn = document.getElementById('saveBtn');
-                sBtn.style.display = 'block'; sBtn.classList.add('changed');
+                document.getElementById('saveBtn').style.display = 'block';
+                document.getElementById('saveBtn').classList.add('changed');
                 render();
                 fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type: "updateOwners", flowerName: f.name, newOwners: f.owners.join(',') }) });
-            } else {
-                alert(`🌸 花名：${f.name}\n📂 分類：${f.category}\n👤 擁有者：${f.owners.join('、') || '暫無人擁有'}`);
             }
         };
         box.appendChild(div);
@@ -202,33 +171,27 @@ function render() {
 }
 
 function updateSidebar() {
-    const list = document.getElementById('userList'); list.innerHTML = '';
-    let stats = {};
-    Object.keys(users).forEach(u => { if(u!=='admin') stats[u] = 0; });
+    const list = document.getElementById('userList'); if(!list) return;
+    list.innerHTML = '';
+    let stats = {}; Object.keys(users).forEach(u => { if(u!=='admin') stats[u]=0; });
     db.forEach(f => f.owners.forEach(o => { if(stats[o]!==undefined) stats[o]++; }));
     Object.entries(stats).sort((a,b)=>b[1]-a[1]).forEach(([n, c]) => {
-        const item = document.createElement('div');
-        item.className = 'rank-item';
+        const item = document.createElement('div'); item.className = 'rank-item';
         item.innerHTML = `<span>${n}</span><span>${c} 朵</span>`;
         list.appendChild(item);
     });
 }
 
 function login() {
-    const u = document.getElementById('uIn').value.trim();
-    const p = document.getElementById('pIn').value.trim();
+    const u = document.getElementById('uIn').value.trim(), p = document.getElementById('pIn').value.trim();
     if(users[u] === p) {
-        currentUser = u;
-        document.getElementById('loginArea').style.display = 'none';
+        currentUser = u; document.getElementById('loginArea').style.display = 'none';
         document.getElementById('userArea').style.display = 'block';
         document.getElementById('welcomeTxt').innerText = u;
-        if(u === 'admin') {
-            document.getElementById('adminPanel').style.display = 'block';
-        } else {
-            document.getElementById('saveBtn').style.display = 'block';
-        }
+        if(u === 'admin') document.getElementById('adminPanel').style.display = 'block';
+        else document.getElementById('saveBtn').style.display = 'block';
         render();
-    } else { alert("帳密錯誤"); }
+    } else alert("帳密錯誤");
 }
 
 async function manualSync() {
@@ -239,28 +202,13 @@ async function manualSync() {
     setTimeout(()=>btn.innerText="💾 儲存變動", 2000);
 }
 
-// --- 管理員專屬功能 ---
 async function addM() {
-    const n = document.getElementById('mN').value.trim();
-    const p = document.getElementById('mP').value.trim();
-    if(n && p) {
-        users[n] = p;
-        setupInterface();
-        await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type: "addMember", username: n, password: p }) });
-        alert("成員已新增");
-    }
+    const n = document.getElementById('mN').value, p = document.getElementById('mP').value;
+    if(n&&p) { await fetch(API_URL,{method:"POST",mode:"no-cors",body:JSON.stringify({type:"addMember",username:n,password:p})}); alert("已新增成員"); location.reload(); }
 }
-
 async function addF() {
-    const n = document.getElementById('fN').value.trim();
-    const c = document.getElementById('fC').value.trim();
-    if(n && c) {
-        db.push({ name: n, category: c, image: "", owners: [] });
-        setupInterface();
-        render();
-        await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type: "addFlower", name: n, category: c, image: "" }) });
-        alert("花朵已建檔");
-    }
+    const n = document.getElementById('fN').value, c = document.getElementById('fC').value;
+    if(n&&c) { await fetch(API_URL,{method:"POST",mode:"no-cors",body:JSON.stringify({type:"addFlower",name:n,category:c,image:""})}); alert("已建檔"); location.reload(); }
 }
 
 init();
