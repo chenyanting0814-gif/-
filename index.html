@@ -8,22 +8,19 @@
         :root { --main: #6a5acd; --bg: #f5f5f7; --success: #27ae60; --error: #e74c3c; --dark: #2c3e50; }
         body { font-family: "Microsoft JhengHei", sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; background: var(--bg); color: #333; }
         
-        /* 頂部管理列 */
         .admin-bar { position: fixed; top: 0; width: 100%; height: 50px; background: var(--dark); color: white; display: flex; align-items: center; padding: 0 10px; z-index: 1000; box-sizing: border-box; justify-content: space-between; }
         .admin-bar input { width: 60px; font-size: 11px; padding: 4px; border-radius: 4px; border: none; }
         .admin-bar button { background: var(--main); color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
 
-        /* 左側主牆 */
         .main-content { flex: 1; padding: 60px 8px 80px; overflow-y: auto; box-sizing: border-box; }
         
-        /* 篩選列 */
         .filter-bar { margin-bottom: 12px; background: white; padding: 8px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .filter-group { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 13px; margin-bottom: 5px; }
         .filter-btn { padding: 4px 10px; border-radius: 12px; border: 1.5px solid var(--main); background: transparent; color: var(--main); font-size: 11px; cursor: pointer; font-weight: bold; }
         .filter-btn.active { background: var(--main); color: white; }
         .member-select { padding: 4px; border-radius: 6px; border: 1.5px solid var(--main); font-size: 12px; color: var(--main); font-weight: bold; outline: none; }
 
-        /* 花牆：手機強制四行 */
+        /* 花牆 */
         #flowers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
         .flower { background: white; padding: 5px; border-radius: 8px; text-align: center; cursor: pointer; border: 2px solid transparent; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .flower img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 5px; background: #eee; }
@@ -32,12 +29,10 @@
         .flower.not-owned { opacity: 0.3; filter: grayscale(100%); }
         .flower.owned { opacity: 1; border-color: var(--main); }
 
-        /* 右側側邊欄 (排行榜) */
-        .sidebar { width: 90px; padding: 60px 5px 20px; background: white; border-left: 1px solid #ddd; overflow-y: auto; box-sizing: border-box; flex-shrink: 0; }
-        .sidebar h4 { font-size: 11px; margin: 0 0 8px; text-align: center; color: var(--main); border-bottom: 1px solid #eee; padding-bottom: 4px; }
-        .rank-item { padding: 6px 2px; border-bottom: 1px solid #f2f2f2; display: flex; flex-direction: column; align-items: center; text-align: center; font-size: 11px; }
-        .rank-name { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
-        .rank-count { color: var(--main); font-size: 10px; margin-top: 2px; }
+        /* 側邊欄：手機版隱藏 */
+        .sidebar { width: 180px; padding: 60px 15px 20px; background: white; border-left: 1px solid #ddd; overflow-y: auto; box-sizing: border-box; flex-shrink: 0; }
+        .sidebar h4 { font-size: 14px; margin: 0 0 10px; text-align: center; color: var(--main); border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .rank-item { padding: 10px 5px; border-bottom: 1px solid #f2f2f2; display: flex; justify-content: space-between; font-size: 13px; }
 
         /* 儲存鈕 */
         #saveBtn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 130px; padding: 12px; background: var(--success); color: white; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 2000; display: none; text-align: center; }
@@ -46,17 +41,16 @@
 
         #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 9999; }
 
-        @media (min-width: 769px) {
-            .sidebar { width: 180px; }
-            #flowers { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
-            .flower-name { font-size: 13px; }
-            .rank-item { flex-direction: row; justify-content: space-between; padding: 10px; }
+        /* 手機版專屬 RWD */
+        @media (max-width: 768px) {
+            .sidebar { display: none; } /* 手機版直接隱藏排行 */
+            #flowers { grid-template-columns: repeat(4, 1fr); }
         }
     </style>
 </head>
 <body>
 
-<div id="loading">🌸 正在喚醒圖片...</div>
+<div id="loading">🌸 正在載入花房...</div>
 
 <div class="admin-bar">
     <div id="loginArea">
@@ -64,7 +58,7 @@
     </div>
     <div id="userArea" style="display:none;">
         <span id="welcomeTxt" style="font-size:11px;"></span>
-        <button onclick="location.reload()">登出</button>
+        <button onclick="location.reload()" style="background:var(--error); margin-left:5px;">登出</button>
     </div>
 </div>
 
@@ -126,8 +120,7 @@ function setupInterface() {
         }
     });
     const catBar = document.getElementById('categoryFilters');
-    const categories = [...new Set(db.map(f => f.category))];
-    categories.forEach(cat => {
+    [...new Set(db.map(f => f.category))].forEach(cat => {
         const btn = document.createElement('button'); btn.className = 'filter-btn'; btn.innerText = cat;
         btn.onclick = (e) => filterBy('category', cat, e.target); catBar.appendChild(btn);
     });
@@ -158,23 +151,19 @@ function render() {
         const isOwned = currentUser && f.owners.includes(currentUser);
         div.className = 'flower' + (currentUser && currentUser !== 'admin' ? (isOwned ? ' owned' : ' not-owned') : ' owned');
         
-        // --- 核心修復：圖片路徑生成 ---
         let imgUrl = "";
         if (f.image && f.image.startsWith("http")) {
             imgUrl = f.image;
         } else {
-            // 如果沒填網址，就去抓 GitHub 對應資料夾的照片
             const fileName = f.image ? f.image : `${f.category}-${f.name}`;
             const fullPath = `images/${f.category}/${fileName}.jpg`;
             imgUrl = GITHUB_RAW_BASE + encodeURI(fullPath);
         }
         
-        div.innerHTML = `
-            <img src="${imgUrl}" onerror="this.src='https://placehold.co/100?text=無圖片'">
-            <div class="flower-name">${f.name}</div>
-        `;
+        div.innerHTML = `<img src="${imgUrl}" onerror="this.src='https://placehold.co/100?text=無圖片'"><div class="flower-name">${f.name}</div>`;
         
         div.onclick = async () => {
+            // 如果是在登入狀態（非管理員），則切換擁有狀態
             if (currentUser && currentUser !== 'admin') {
                 const idx = f.owners.indexOf(currentUser);
                 if (idx > -1) f.owners.splice(idx, 1); else f.owners.push(currentUser);
@@ -182,6 +171,9 @@ function render() {
                 sBtn.style.display = 'block'; sBtn.classList.add('changed');
                 render();
                 fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type: "updateOwners", flowerName: f.name, newOwners: f.owners.join(',') }) });
+            } else {
+                // 如果是管理員或未登入，點擊則彈窗顯示擁有者資訊
+                alert(`🌸 花名：${f.name}\n📂 分類：${f.category}\n👤 擁有者：${f.owners.join('、') || '暫無人擁有'}`);
             }
         };
         box.appendChild(div);
@@ -198,7 +190,7 @@ function updateSidebar() {
     Object.entries(stats).sort((a,b)=>b[1]-a[1]).forEach(([n, c]) => {
         const item = document.createElement('div');
         item.className = 'rank-item';
-        item.innerHTML = `<span class="rank-name">${n}</span><span class="rank-count">${c} 朵</span>`;
+        item.innerHTML = `<span>${n}</span><span>${c} 朵</span>`;
         list.appendChild(item);
     });
 }
