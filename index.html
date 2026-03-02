@@ -8,12 +8,18 @@
         :root { --main: #6a5acd; --bg: #f5f5f7; --success: #27ae60; --error: #e74c3c; --dark: #2c3e50; }
         body { font-family: "Microsoft JhengHei", sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; background: var(--bg); color: #333; }
         
+        /* 頂部管理列 */
         .admin-bar { position: fixed; top: 0; width: 100%; height: 50px; background: var(--dark); color: white; display: flex; align-items: center; padding: 0 10px; z-index: 1000; box-sizing: border-box; justify-content: space-between; }
-        .admin-bar input { width: 60px; font-size: 11px; padding: 4px; border-radius: 4px; border: none; }
-        .admin-bar button { background: var(--main); color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
+        .admin-bar input { width: 65px; font-size: 11px; padding: 4px; border-radius: 4px; border: none; margin: 0 2px; }
+        .admin-bar button { background: var(--main); color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; }
 
         .main-content { flex: 1; padding: 60px 8px 80px; overflow-y: auto; box-sizing: border-box; }
         
+        /* 管理控制台樣式 */
+        #adminPanel { display: none; background: white; padding: 10px; border: 2px solid var(--main); border-radius: 8px; margin-bottom: 12px; font-size: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .admin-row { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 5px; align-items: center; }
+        #adminPanel input { border: 1px solid #ccc; width: 80px; }
+
         .filter-bar { margin-bottom: 12px; background: white; padding: 8px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .filter-group { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 13px; margin-bottom: 5px; }
         .filter-btn { padding: 4px 10px; border-radius: 12px; border: 1.5px solid var(--main); background: transparent; color: var(--main); font-size: 11px; cursor: pointer; font-weight: bold; }
@@ -41,9 +47,8 @@
 
         #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 9999; }
 
-        /* 手機版專屬 RWD */
         @media (max-width: 768px) {
-            .sidebar { display: none; } /* 手機版直接隱藏排行 */
+            .sidebar { display: none; }
             #flowers { grid-template-columns: repeat(4, 1fr); }
         }
     </style>
@@ -63,6 +68,21 @@
 </div>
 
 <div class="main-content">
+    <div id="adminPanel">
+        <div class="admin-row">
+            <strong>👥 成員:</strong>
+            <input type="text" id="mN" placeholder="名稱">
+            <input type="text" id="mP" placeholder="密碼">
+            <button onclick="addM()">新增</button>
+        </div>
+        <div class="admin-row">
+            <strong>🌸 花朵:</strong>
+            <input type="text" id="fN" placeholder="花名">
+            <input type="text" id="fC" placeholder="顏色" style="width:40px">
+            <button onclick="addF()">建檔</button>
+        </div>
+    </div>
+
     <div class="filter-bar">
         <div class="filter-group">
             <strong>成員：</strong>
@@ -112,6 +132,7 @@ async function init() {
 
 function setupInterface() {
     const select = document.getElementById('memberSelect');
+    select.innerHTML = '<option value="all">顯示全部</option>';
     Object.keys(users).forEach(u => {
         if(u !== 'admin') {
             const opt = document.createElement('option');
@@ -120,6 +141,7 @@ function setupInterface() {
         }
     });
     const catBar = document.getElementById('categoryFilters');
+    catBar.innerHTML = '<strong>分類：</strong><button class="filter-btn active" id="btn-all" onclick="filterBy(\'all\', \'all\', this)">全部</button>';
     [...new Set(db.map(f => f.category))].forEach(cat => {
         const btn = document.createElement('button'); btn.className = 'filter-btn'; btn.innerText = cat;
         btn.onclick = (e) => filterBy('category', cat, e.target); catBar.appendChild(btn);
@@ -163,7 +185,6 @@ function render() {
         div.innerHTML = `<img src="${imgUrl}" onerror="this.src='https://placehold.co/100?text=無圖片'"><div class="flower-name">${f.name}</div>`;
         
         div.onclick = async () => {
-            // 如果是在登入狀態（非管理員），則切換擁有狀態
             if (currentUser && currentUser !== 'admin') {
                 const idx = f.owners.indexOf(currentUser);
                 if (idx > -1) f.owners.splice(idx, 1); else f.owners.push(currentUser);
@@ -172,7 +193,6 @@ function render() {
                 render();
                 fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type: "updateOwners", flowerName: f.name, newOwners: f.owners.join(',') }) });
             } else {
-                // 如果是管理員或未登入，點擊則彈窗顯示擁有者資訊
                 alert(`🌸 花名：${f.name}\n📂 分類：${f.category}\n👤 擁有者：${f.owners.join('、') || '暫無人擁有'}`);
             }
         };
@@ -186,7 +206,6 @@ function updateSidebar() {
     let stats = {};
     Object.keys(users).forEach(u => { if(u!=='admin') stats[u] = 0; });
     db.forEach(f => f.owners.forEach(o => { if(stats[o]!==undefined) stats[o]++; }));
-    
     Object.entries(stats).sort((a,b)=>b[1]-a[1]).forEach(([n, c]) => {
         const item = document.createElement('div');
         item.className = 'rank-item';
@@ -203,7 +222,11 @@ function login() {
         document.getElementById('loginArea').style.display = 'none';
         document.getElementById('userArea').style.display = 'block';
         document.getElementById('welcomeTxt').innerText = u;
-        if(u !== 'admin') document.getElementById('saveBtn').style.display = 'block';
+        if(u === 'admin') {
+            document.getElementById('adminPanel').style.display = 'block';
+        } else {
+            document.getElementById('saveBtn').style.display = 'block';
+        }
         render();
     } else { alert("帳密錯誤"); }
 }
@@ -214,6 +237,30 @@ async function manualSync() {
     await Promise.all(promises);
     btn.innerText = "💾 儲存成功"; btn.classList.remove('changed');
     setTimeout(()=>btn.innerText="💾 儲存變動", 2000);
+}
+
+// --- 管理員專屬功能 ---
+async function addM() {
+    const n = document.getElementById('mN').value.trim();
+    const p = document.getElementById('mP').value.trim();
+    if(n && p) {
+        users[n] = p;
+        setupInterface();
+        await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type: "addMember", username: n, password: p }) });
+        alert("成員已新增");
+    }
+}
+
+async function addF() {
+    const n = document.getElementById('fN').value.trim();
+    const c = document.getElementById('fC').value.trim();
+    if(n && c) {
+        db.push({ name: n, category: c, image: "", owners: [] });
+        setupInterface();
+        render();
+        await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type: "addFlower", name: n, category: c, image: "" }) });
+        alert("花朵已建檔");
+    }
 }
 
 init();
