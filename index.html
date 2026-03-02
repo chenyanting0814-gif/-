@@ -2,152 +2,153 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>紫色瘋人院</title>
     <style>
         :root { --main: #6a5acd; --bg: #f5f5f7; --success: #27ae60; --error: #e74c3c; --dark: #2c3e50; }
-        body { font-family: "Microsoft JhengHei", sans-serif; margin: 0; display: flex; background: var(--bg); color: #333; }
+        body { font-family: "Microsoft JhengHei", sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; background: var(--bg); color: #333; }
         
         /* 頂部管理列 */
-        .admin-bar { position: fixed; top: 0; width: 100%; height: 55px; background: var(--dark); color: white; display: flex; align-items: center; padding: 0 20px; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); box-sizing: border-box; justify-content: space-between; }
-        .admin-bar input { margin: 0 5px; padding: 5px; border-radius: 4px; border: none; width: 90px; }
-        .admin-bar button { background: var(--main); color: white; border: none; padding: 6px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
-        
-        .main-content { flex: 1; padding: 75px 20px 20px; max-width: calc(100% - 220px); }
-        
-        /* 分類按鈕區 */
-        .filter-bar { margin-bottom: 20px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-        .filter-btn { padding: 8px 16px; border-radius: 20px; border: 1.5px solid var(--main); background: transparent; color: var(--main); cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .filter-btn.active { background: var(--main); color: white; }
+        .admin-bar { position: fixed; top: 0; width: 100%; height: 50px; background: var(--dark); color: white; display: flex; align-items: center; padding: 0 10px; z-index: 1000; box-sizing: border-box; justify-content: space-between; }
+        .admin-bar input { width: 60px; font-size: 11px; padding: 4px; border-radius: 4px; border: none; }
+        .admin-bar button { background: var(--main); color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
 
-        #adminPanel { display: none; background: white; padding: 15px; border: 2px solid var(--main); border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        /* 左側主牆 */
+        .main-content { flex: 1; padding: 60px 8px 80px; overflow-y: auto; box-sizing: border-box; }
         
-        #flowers { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
-        .flower { background: white; padding: 10px; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 2px solid transparent; }
-        .flower img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 8px; background: #eee; }
-        .flower-name { font-size: 13px; font-weight: bold; margin-top: 8px; height: 32px; overflow: hidden; line-height: 1.2; }
+        /* 篩選列 */
+        .filter-bar { margin-bottom: 12px; background: white; padding: 8px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .filter-group { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 13px; margin-bottom: 5px; }
+        .filter-btn { padding: 4px 10px; border-radius: 12px; border: 1.5px solid var(--main); background: transparent; color: var(--main); font-size: 11px; cursor: pointer; font-weight: bold; }
+        .filter-btn.active { background: var(--main); color: white; }
+        .member-select { padding: 4px; border-radius: 6px; border: 1.5px solid var(--main); font-size: 12px; color: var(--main); font-weight: bold; outline: none; }
+
+        /* 花牆：手機強制四行 */
+        #flowers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .flower { background: white; padding: 5px; border-radius: 8px; text-align: center; cursor: pointer; border: 2px solid transparent; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .flower img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 5px; background: #eee; }
+        .flower-name { font-size: 10px; font-weight: bold; margin-top: 3px; height: 24px; overflow: hidden; display: flex; align-items: center; justify-content: center; line-height: 1.1; }
         
         .flower.not-owned { opacity: 0.3; filter: grayscale(100%); }
-        .flower.owned { opacity: 1; filter: none; border: 2px solid var(--main); box-shadow: 0 0 10px rgba(106, 90, 205, 0.3); }
-        
-        /* 側邊欄收藏家按鈕 */
-        .sidebar { width: 220px; padding: 75px 15px 20px; background: white; border-left: 1px solid #ddd; height: 100vh; position: sticky; top: 0; overflow-y: auto; box-sizing: border-box; }
-        #saveBtn { width: 100%; padding: 12px; background: var(--success); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 20px; display: none; transition: 0.3s; box-shadow: 0 4px 0 #219150; }
-        #saveBtn.changed { background: #f39c12; box-shadow: 0 4px 0 #d35400; }
-        .sidebar h4 { border-bottom: 2px solid var(--main); padding-bottom: 5px; margin-top: 0; color: var(--main); }
-        
-        .user-filter-btn { width: 100%; text-align: left; padding: 10px; margin-bottom: 8px; border: 1px solid #eee; border-radius: 8px; background: #fdfdfd; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
-        .user-filter-btn:hover, .user-filter-btn.active { border-color: var(--main); background: #f0edff; }
-        .user-count { background: var(--main); color: white; border-radius: 10px; padding: 2px 8px; font-size: 11px; }
+        .flower.owned { opacity: 1; border-color: var(--main); }
 
-        #toast { position: fixed; bottom: 25px; right: 25px; padding: 12px 25px; background: #333; color: white; border-radius: 50px; z-index: 3000; display: none; font-weight: bold; }
-        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
-        
-        @media (max-width: 768px) { .main-content { max-width: 100%; } .sidebar { display: none; } }
+        /* 右側側邊欄 (排行榜) */
+        .sidebar { width: 90px; padding: 60px 5px 20px; background: white; border-left: 1px solid #ddd; overflow-y: auto; box-sizing: border-box; flex-shrink: 0; }
+        .sidebar h4 { font-size: 11px; margin: 0 0 8px; text-align: center; color: var(--main); border-bottom: 1px solid #eee; padding-bottom: 4px; }
+        .rank-item { padding: 6px 2px; border-bottom: 1px solid #f2f2f2; display: flex; flex-direction: column; align-items: center; text-align: center; font-size: 11px; }
+        .rank-name { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+        .rank-count { color: var(--main); font-size: 10px; margin-top: 2px; }
+
+        /* 儲存鈕 */
+        #saveBtn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 130px; padding: 12px; background: var(--success); color: white; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 2000; display: none; text-align: center; }
+        #saveBtn.changed { background: #f39c12; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.05); } }
+
+        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 9999; }
+
+        @media (min-width: 769px) {
+            .sidebar { width: 180px; }
+            #flowers { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+            .flower-name { font-size: 13px; }
+            .rank-item { flex-direction: row; justify-content: space-between; padding: 10px; }
+        }
     </style>
 </head>
 <body>
 
-<div id="loading">
-    <div style="font-size: 24px; margin-bottom: 15px;">🌸 正在載入花房...</div>
-    <div id="loadingMsg">正在對齊 GitHub 圖片庫與篩選功能</div>
-</div>
-
-<div id="toast"></div>
+<div id="loading">🌸 正在喚醒圖片...</div>
 
 <div class="admin-bar">
     <div id="loginArea">
-        帳號: <input type="text" id="uIn"> 密碼: <input type="password" id="pIn"> <button onclick="login()">登入</button>
+        <input type="text" id="uIn" placeholder="帳號"> <input type="password" id="pIn" placeholder="密碼"> <button onclick="login()">登入</button>
     </div>
     <div id="userArea" style="display:none;">
-        <span id="welcomeTxt"></span>
-        <button onclick="location.reload()" style="background:var(--error); margin-left:10px;">登出</button>
+        <span id="welcomeTxt" style="font-size:11px;"></span>
+        <button onclick="location.reload()">登出</button>
     </div>
 </div>
 
 <div class="main-content">
-    <div class="filter-bar" id="categoryFilters">
-        <strong>分類：</strong>
-        <button class="filter-btn active" id="btn-all" onclick="filterBy('all', 'all', this)">全部顯示</button>
-    </div>
-
-    <div id="adminPanel">
-        <h4 style="margin-top:0;">🛠️ 管理員控制台</h4>
-        <div style="display: flex; gap: 20px;">
-            <div>名: <input type="text" id="mN"> 密: <input type="text" id="mP"> <button onclick="addM()">新增成員</button></div>
-            <div>名: <input type="text" id="fN"> 分: <input type="text" id="fC" value="紅" style="width:40px"> <button onclick="addF()">花朵建檔</button></div>
+    <div class="filter-bar">
+        <div class="filter-group">
+            <strong>成員：</strong>
+            <select id="memberSelect" class="member-select" onchange="filterByMember(this.value)">
+                <option value="all">顯示全部</option>
+            </select>
+        </div>
+        <div class="filter-group" id="categoryFilters">
+            <strong>分類：</strong>
+            <button class="filter-btn active" id="btn-all" onclick="filterBy('all', 'all', this)">全部</button>
         </div>
     </div>
     <div id="flowers"></div>
 </div>
 
 <div class="sidebar">
-    <button onclick="manualSync()" id="saveBtn">💾 儲存目前進度</button>
-    <div id="sideBox">
-        <h4>收藏家篩選</h4>
-        <div id="userList"></div>
-    </div>
+    <h4>📊 收集清單</h4>
+    <div id="userList"></div>
 </div>
+
+<button onclick="manualSync()" id="saveBtn">💾 儲存變動</button>
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbyT64IkZksYdYkLHFXiZu22AIV5yew5q3JuZJuRrnTp8_Iy9vVl7Jh9efFfH2G3voT8/exec";
 const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/chenyanting0814-gif/-/main/";
 
-let db = [];
-let users = {};
-let currentUser = null;
-let currentFilterType = 'all'; 
-let currentFilterVal = 'all';
+let db = []; let users = {}; let currentUser = null; 
+let currentFilterType = 'all'; let currentFilterVal = 'all';
 
 async function init() {
     try {
         const res = await fetch(API_URL, { redirect: "follow" });
         const data = await res.json();
-        
         users = {};
-        data.members.slice(1).forEach(row => {
-            if(row[0]) users[row[0].toString().trim()] = row[1].toString().trim();
-        });
-        
+        data.members.slice(1).forEach(row => { if(row[0]) users[row[0].toString().trim()] = row[1].toString().trim(); });
         db = data.flowers.slice(1).map(row => ({
             name: row[0] ? row[0].toString().trim() : "",
             category: row[1] ? row[1].toString().trim() : "紅",
             image: row[2] ? row[2].toString().trim() : "", 
             owners: row[3] ? row[3].toString().split(',').map(o=>o.trim()).filter(o=>o!=='') : []
         }));
-
-        setupCategoryButtons();
+        setupInterface();
         document.getElementById('loading').style.display = 'none';
         render();
-    } catch (error) {
-        document.getElementById('loadingMsg').innerHTML = `<span style="color:red">連線失敗！</span>`;
-    }
+    } catch (e) { document.getElementById('loading').innerText = "連線失敗"; }
 }
 
-function setupCategoryButtons() {
-    const bar = document.getElementById('categoryFilters');
+function setupInterface() {
+    const select = document.getElementById('memberSelect');
+    Object.keys(users).forEach(u => {
+        if(u !== 'admin') {
+            const opt = document.createElement('option');
+            opt.value = u; opt.innerText = u;
+            select.appendChild(opt);
+        }
+    });
+    const catBar = document.getElementById('categoryFilters');
     const categories = [...new Set(db.map(f => f.category))];
     categories.forEach(cat => {
-        const btn = document.createElement('button');
-        btn.className = 'filter-btn';
-        btn.innerText = cat;
-        btn.onclick = (e) => filterBy('category', cat, e.target);
-        bar.appendChild(btn);
+        const btn = document.createElement('button'); btn.className = 'filter-btn'; btn.innerText = cat;
+        btn.onclick = (e) => filterBy('category', cat, e.target); catBar.appendChild(btn);
     });
 }
 
+function filterByMember(name) {
+    if(name === 'all') filterBy('all', 'all', document.getElementById('btn-all'));
+    else filterBy('user', name, null);
+}
+
 function filterBy(type, val, btn) {
-    currentFilterType = type;
-    currentFilterVal = val;
-    document.querySelectorAll('.filter-btn, .user-filter-btn').forEach(b => b.classList.remove('active'));
-    if(btn) btn.classList.add('active');
+    currentFilterType = type; currentFilterVal = val;
+    if(btn) {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
     render();
 }
 
 function render() {
-    const box = document.getElementById('flowers');
-    box.innerHTML = '';
-    
+    const box = document.getElementById('flowers'); box.innerHTML = '';
     let filtered = db;
     if(currentFilterType === 'category') filtered = db.filter(f => f.category === currentFilterVal);
     else if(currentFilterType === 'user') filtered = db.filter(f => f.owners.includes(currentFilterVal));
@@ -155,61 +156,50 @@ function render() {
     filtered.forEach(f => {
         const div = document.createElement('div');
         const isOwned = currentUser && f.owners.includes(currentUser);
-        
-        // 只有在登入且「非管理員」狀態下，才會顯示灰階/彩色對比
         div.className = 'flower' + (currentUser && currentUser !== 'admin' ? (isOwned ? ' owned' : ' not-owned') : ' owned');
         
-        // --- 圖片邏輯 (沿用你剛才成功的邏輯) ---
+        // --- 核心修復：圖片路徑生成 ---
         let imgUrl = "";
-        const cat = f.category;
-        const name = f.name;
         if (f.image && f.image.startsWith("http")) {
             imgUrl = f.image;
         } else {
-            const fileName = f.image ? f.image : `${cat}-${name}`;
-            const fullPath = `images/${cat}/${fileName}.jpg`;
+            // 如果沒填網址，就去抓 GitHub 對應資料夾的照片
+            const fileName = f.image ? f.image : `${f.category}-${f.name}`;
+            const fullPath = `images/${f.category}/${fileName}.jpg`;
             imgUrl = GITHUB_RAW_BASE + encodeURI(fullPath);
         }
         
         div.innerHTML = `
-            <img src="${imgUrl}" onerror="this.src='https://placehold.co/140?text=圖片錯誤\n${cat}-${name}'">
-            <div class="flower-name">${name}</div>
+            <img src="${imgUrl}" onerror="this.src='https://placehold.co/100?text=無圖片'">
+            <div class="flower-name">${f.name}</div>
         `;
         
         div.onclick = async () => {
             if (currentUser && currentUser !== 'admin') {
                 const idx = f.owners.indexOf(currentUser);
-                if (idx > -1) f.owners.splice(idx, 1);
-                else f.owners.push(currentUser);
-                
+                if (idx > -1) f.owners.splice(idx, 1); else f.owners.push(currentUser);
                 const sBtn = document.getElementById('saveBtn');
-                sBtn.classList.add('changed');
-                sBtn.innerText = "⚠️ 尚未儲存變動";
-                
+                sBtn.style.display = 'block'; sBtn.classList.add('changed');
                 render();
-                syncToCloud("updateOwners", { flowerName: f.name, newOwners: f.owners.join(',') });
-            } else {
-                alert(`花名：${name}\n分類：${cat}\n收藏者：${f.owners.join('、') || '暫無'}`);
+                fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type: "updateOwners", flowerName: f.name, newOwners: f.owners.join(',') }) });
             }
         };
         box.appendChild(div);
     });
-
     updateSidebar();
 }
 
 function updateSidebar() {
-    const list = document.getElementById('userList');
-    list.innerHTML = '';
+    const list = document.getElementById('userList'); list.innerHTML = '';
     let stats = {};
-    db.forEach(f => f.owners.forEach(o => stats[o] = (stats[o]||0)+1));
+    Object.keys(users).forEach(u => { if(u!=='admin') stats[u] = 0; });
+    db.forEach(f => f.owners.forEach(o => { if(stats[o]!==undefined) stats[o]++; }));
     
     Object.entries(stats).sort((a,b)=>b[1]-a[1]).forEach(([n, c]) => {
-        const btn = document.createElement('div');
-        btn.className = 'user-filter-btn' + (currentFilterType === 'user' && currentFilterVal === n ? ' active' : '');
-        btn.innerHTML = `<span>${n}</span> <span class="user-count">${c} 朵</span>`;
-        btn.onclick = () => filterBy('user', n, btn);
-        list.appendChild(btn);
+        const item = document.createElement('div');
+        item.className = 'rank-item';
+        item.innerHTML = `<span class="rank-name">${n}</span><span class="rank-count">${c} 朵</span>`;
+        list.appendChild(item);
     });
 }
 
@@ -220,62 +210,18 @@ function login() {
         currentUser = u;
         document.getElementById('loginArea').style.display = 'none';
         document.getElementById('userArea').style.display = 'block';
-        document.getElementById('welcomeTxt').innerText = "Hi, " + u;
-        if(u === 'admin') document.getElementById('adminPanel').style.display = 'block';
-        else document.getElementById('saveBtn').style.display = 'block';
-        showToast("登入成功", "var(--main)");
+        document.getElementById('welcomeTxt').innerText = u;
+        if(u !== 'admin') document.getElementById('saveBtn').style.display = 'block';
         render();
-    } else { showToast("帳密錯誤", "var(--error)"); }
-}
-
-async function syncToCloud(type, payload) {
-    try {
-        await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type, ...payload }) });
-    } catch (e) { console.error("同步失敗", e); }
+    } else { alert("帳密錯誤"); }
 }
 
 async function manualSync() {
-    const btn = document.getElementById('saveBtn');
-    btn.innerText = "⏳ 儲存中...";
-    btn.disabled = true;
-    try {
-        const promises = db.map(f => fetch(API_URL, { 
-            method: "POST", mode: "no-cors", 
-            body: JSON.stringify({ type: "updateOwners", flowerName: f.name, newOwners: f.owners.join(',') }) 
-        }));
-        await Promise.all(promises);
-        btn.classList.remove('changed');
-        btn.innerText = "💾 儲存目前進度";
-        showToast("存檔成功！", "var(--success)");
-    } catch (e) { showToast("存檔失敗", "var(--error)"); }
-    finally { btn.disabled = false; }
-}
-
-async function addM() {
-    const n = document.getElementById('mN').value.trim();
-    const p = document.getElementById('mP').value.trim();
-    if(n && p) {
-        users[n] = p;
-        await syncToCloud("addMember", { username: n, password: p });
-        showToast("成員已新增", "var(--success)");
-    }
-}
-
-async function addF() {
-    const n = document.getElementById('fN').value.trim();
-    const c = document.getElementById('fC').value.trim();
-    if(n) {
-        db.push({ name: n, category: c, image: "", owners: [] });
-        render();
-        await syncToCloud("addFlower", { name: n, category: c, image: "" });
-        showToast("花朵建檔成功", "var(--success)");
-    }
-}
-
-function showToast(m, c) {
-    const t = document.getElementById('toast');
-    t.innerText = m; t.style.background = c; t.style.display = 'block';
-    setTimeout(() => t.style.display='none', 2000);
+    const btn = document.getElementById('saveBtn'); btn.innerText = "⏳ 儲存中...";
+    const promises = db.map(f => fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type: "updateOwners", flowerName: f.name, newOwners: f.owners.join(',') }) }));
+    await Promise.all(promises);
+    btn.innerText = "💾 儲存成功"; btn.classList.remove('changed');
+    setTimeout(()=>btn.innerText="💾 儲存變動", 2000);
 }
 
 init();
