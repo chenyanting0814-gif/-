@@ -17,8 +17,6 @@
         .admin-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; }
         .admin-card h3 { margin: 0 0 10px 0; font-size: 15px; border-left: 4px solid var(--main); padding-left: 8px; }
         .status-msg { font-size: 12px; margin-top: 8px; font-weight: bold; display: none; }
-        .status-success { color: var(--success); }
-        .status-error { color: var(--error); }
 
         /* 使用者花牆 */
         #userContent { display: flex; flex-direction: column; flex: 1; }
@@ -35,7 +33,6 @@
         .score-badge { position: absolute; top: 3px; right: 3px; background: rgba(0,0,0,0.7); color: var(--gold); font-size: 10px; padding: 2px 5px; border-radius: 6px; font-weight: bold; z-index: 5; }
         .flower-name { font-size: 11px; margin-top: 6px; font-weight: bold; }
 
-        /* 競賽樣式 - 修正名稱固定寬度 */
         .comp-row { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #eee; background: white; }
         .comp-name { flex: 0 0 auto; font-weight: bold; color: var(--dark); font-size: 14px; border-right: 1px solid #ddd; margin-right: 15px; white-space: nowrap; padding-right: 5px; }
         .comp-flowers { flex: 1; font-size: 13px; color: #666; }
@@ -49,11 +46,12 @@
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; justify-content: center; align-items: center; }
         .modal-content { background: white; padding: 20px; border-radius: 15px; width: 85%; max-width: 350px; text-align: center; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column; }
         
-        /* 報名彈窗內容區塊捲動 */
-        #compCheckList { text-align: left; overflow-y: auto; flex: 1; margin-top: 10px; border-top: 1px solid #eee; }
-
         #saveBtn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 12px 30px; background: var(--success); color: white; border: none; border-radius: 50px; font-weight: bold; z-index: 1500; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+        
+        .profile-box { text-align: left; margin-top: 10px; }
+        .profile-box label { font-size: 12px; font-weight: bold; color: #666; }
+        .profile-box span.hint { font-size: 10px; color: var(--error); margin-left: 5px; }
     </style>
 </head>
 <body>
@@ -66,7 +64,7 @@
         <button id="memberAssetsBtn" onclick="showMemberPage()">成員資產</button>
         <span id="loginBtn" onclick="openModal('loginModal')" style="color:#aaa; font-size:11px; text-decoration:underline; cursor:pointer;">登入</span>
         <div id="userArea" style="display:none; align-items:center; gap:6px;">
-            <span id="userGreet" style="font-size:11px;"></span>
+            <span id="userGreet" onclick="openProfileModal()" style="font-size:12px; color:var(--gold); font-weight:bold; cursor:pointer; text-decoration:underline;"></span>
             <button onclick="location.reload()" style="background:var(--error); font-size:10px;">登出</button>
         </div>
     </div>
@@ -120,30 +118,26 @@
     </div>
 </div>
 
-<div id="detailModal" class="modal" onclick="closeModal('detailModal')">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <h3 id="detailTitle"></h3>
-        <div id="ownerListText" style="padding:15px; line-height:1.6; text-align:left; background:#f5f5f5; border-radius:8px; margin-bottom:10px;"></div>
-        <button onclick="closeModal('detailModal')" style="width:100%; padding:10px; background:#ddd; border:none; border-radius:8px;">關閉</button>
-    </div>
-</div>
-
-<div id="loginModal" class="modal"><div class="modal-content"><h3>系統登入</h3><input type="text" id="uIn" placeholder="帳號"><input type="password" id="pIn" placeholder="密碼"><button onclick="login()" style="width:100%; padding:12px; background:var(--main); color:white; border:none; border-radius:8px;">登入</button></div></div>
-
-<div id="compModal" class="modal">
+<div id="profileModal" class="modal">
     <div class="modal-content">
-        <h3 style="margin-bottom:10px;">選擇報名花朵</h3>
-        <button onclick="saveCompSelection()" style="width:100%; padding:12px; background:var(--success); color:white; border:none; border-radius:8px; font-weight:bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">✅ 確認報名並關閉</button>
-        <div id="compCheckList"></div>
+        <h3 style="margin-bottom:15px;">帳號設定</h3>
+        <div class="profile-box">
+            <label>登入帳號</label><span id="idHint" class="hint"></span>
+            <input type="text" id="profID">
+            <label>顯示名字 (改名將同步花牆資料)</label>
+            <input type="text" id="profName">
+            <label>新密碼 (不限次數)</label>
+            <input type="password" id="profPwd">
+        </div>
+        <button onclick="saveProfile()" style="width:100%; padding:12px; background:var(--success); color:white; border:none; border-radius:8px; font-weight:bold; margin-top:10px;">確認修改並重新登入</button>
+        <button onclick="closeModal('profileModal')" style="width:100%; padding:10px; background:#ddd; border:none; border-radius:8px; margin-top:10px;">取消</button>
     </div>
 </div>
 
-<div id="memberPage" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:2000; padding-top:50px;">
-    <button onclick="hideMemberPage()" style="position:absolute; top:10px; right:10px; width:30px; height:30px; border-radius:50%; background:#333; color:white; border:none;">✕</button>
-    <div id="memberHeader" onclick="document.getElementById('mList').style.display='flex'" style="background:white; padding:15px; text-align:center; color:var(--main); font-weight:bold; border-bottom:1px solid #ddd;">點擊選擇成員</div>
-    <div id="mList" style="display:none; flex-wrap:wrap; gap:8px; padding:10px; background:#eee; max-height:150px; overflow-y:auto;"></div>
-    <div id="memberFlowers"></div>
-</div>
+<div id="detailModal" class="modal" onclick="closeModal('detailModal')"><div class="modal-content" onclick="event.stopPropagation()"><h3 id="detailTitle"></h3><div id="ownerListText" style="padding:15px; line-height:1.6; text-align:left; background:#f5f5f5; border-radius:8px; margin-bottom:10px;"></div><button onclick="closeModal('detailModal')" style="width:100%; padding:10px; background:#ddd; border:none; border-radius:8px;">關閉</button></div></div>
+<div id="loginModal" class="modal"><div class="modal-content"><h3>系統登入</h3><input type="text" id="uIn" placeholder="帳號"><input type="password" id="pIn" placeholder="密碼"><button onclick="login()" style="width:100%; padding:12px; background:var(--main); color:white; border:none; border-radius:8px;">登入</button></div></div>
+<div id="compModal" class="modal"><div class="modal-content"><h3 style="margin-bottom:10px;">選擇報名花朵</h3><button onclick="saveCompSelection()" style="width:100%; padding:12px; background:var(--success); color:white; border:none; border-radius:8px; font-weight:bold;">✅ 確認報名並關閉</button><div id="compCheckList"></div></div></div>
+<div id="memberPage" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:2000; padding-top:50px;"><button onclick="hideMemberPage()" style="position:absolute; top:10px; right:10px; width:30px; height:30px; border-radius:50%; background:#333; color:white; border:none;">✕</button><div id="memberHeader" onclick="document.getElementById('mList').style.display='flex'" style="background:white; padding:15px; text-align:center; color:var(--main); font-weight:bold; border-bottom:1px solid #ddd;">點擊選擇成員</div><div id="mList" style="display:none; flex-wrap:wrap; gap:8px; padding:10px; background:#eee; max-height:150px; overflow-y:auto;"></div><div id="memberFlowers"></div></div>
 
 <button onclick="manualSync()" id="saveBtn">💾 儲存修改內容</button>
 
@@ -156,7 +150,12 @@ async function init(silent = false) {
     if(!silent) document.getElementById('loading').style.display = 'flex';
     try {
         const res = await fetch(API_URL); const data = await res.json();
-        users = data.members.slice(1).map(row => ({ loginID: row[0]?.toString().trim(), pwd: row[1]?.toString().trim(), displayName: row[2]?.toString().trim() || row[0] }));
+        users = data.members.slice(1).map(row => ({ 
+            loginID: row[0]?.toString().trim(), 
+            pwd: row[1]?.toString().trim(), 
+            displayName: row[2]?.toString().trim() || row[0],
+            hasChangedID: row[3] == 1 
+        }));
         db = data.flowers.slice(1).map(row => ({ 
             name: row[0]?.toString().trim(), category: row[1], image: row[2], 
             owners: row[3]?.toString().split(',').filter(o=>o), score: row[4] || 0,
@@ -167,33 +166,6 @@ async function init(silent = false) {
     } catch (e) { document.getElementById('loading').innerText = "❌ 連線失敗"; }
 }
 
-function showStatus(id, msg, err=false) {
-    const el = document.getElementById(id); el.innerText = msg;
-    el.className = 'status-msg ' + (err ? 'status-error' : 'status-success'); el.style.display = 'block';
-    if(!err) setTimeout(() => el.style.display = 'none', 3000);
-}
-
-async function submitNewMember() {
-    const acc = document.getElementById('newUserAcc').value.trim(), pw = document.getElementById('newUserPwd').value.trim();
-    if(!acc || !pw) return showStatus('msgMember', '請填寫完整', true);
-    showStatus('msgMember', '⏳ 處理中...');
-    try {
-        await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type: "addMember", loginID: acc, pwd: pw, displayName: acc }) });
-        showStatus('msgMember', '✅ 成功'); document.getElementById('newUserAcc').value = ''; document.getElementById('newUserPwd').value = ''; await init(true);
-    } catch (e) { showStatus('msgMember', '❌ 失敗', true); }
-}
-
-async function submitNewFlower() {
-    const name = document.getElementById('newFName').value.trim(), cat = document.getElementById('newFCat').value;
-    if(!name) return showStatus('msgFlower', '請輸入花名', true);
-    showStatus('msgFlower', '⏳ 發布中...');
-    const autoImg = `${cat}-${name}`;
-    try {
-        await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type: "addFlower", flowerName: name, category: cat, image: autoImg, score: 0 }) });
-        showStatus('msgFlower', `✅ 成功：${autoImg}`); document.getElementById('newFName').value = ''; await init(true);
-    } catch (e) { showStatus('msgFlower', '❌ 失敗', true); }
-}
-
 function login() {
     const u = document.getElementById('uIn').value.trim(), p = document.getElementById('pIn').value.trim();
     const found = users.find(x => x.loginID === u && x.pwd === p);
@@ -202,14 +174,130 @@ function login() {
         document.getElementById('userGreet').innerText = found.displayName;
         document.getElementById('userArea').style.display = 'flex';
         document.getElementById('loginBtn').style.display = 'none';
-        if(u === 'admin') { document.getElementById('userContent').style.display = 'none'; document.getElementById('adminDashboard').style.display = 'block'; }
-        else { render(); }
+        if(u === 'admin') { 
+            document.getElementById('userContent').style.display = 'none'; 
+            document.getElementById('adminDashboard').style.display = 'block'; 
+        } else { render(); }
     } else alert("帳密錯誤");
 }
 
+/* --- 管理員功能 --- */
+async function submitNewMember() {
+    const acc = document.getElementById('newUserAcc').value.trim();
+    const pwd = document.getElementById('newUserPwd').value.trim();
+    const msg = document.getElementById('msgMember');
+    if (!acc || !pwd) { alert("帳號密碼不可為空"); return; }
+    msg.style.display = 'block'; msg.style.color = "#333"; msg.innerText = "⏳ 正在建立帳號...";
+    try {
+        await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({
+            type: "addMember", loginID: acc, pwd: pwd, displayName: acc 
+        })});
+        msg.innerText = "✅ 帳號建立成功！"; msg.style.color = "#27ae60";
+        document.getElementById('newUserAcc').value = ''; document.getElementById('newUserPwd').value = '';
+        init(true);
+    } catch (e) { msg.innerText = "❌ 建立失敗"; msg.style.color = "#e74c3c"; }
+}
+
+async function submitNewFlower() {
+    const name = document.getElementById('newFName').value.trim();
+    const cat = document.getElementById('newFCat').value;
+    const msg = document.getElementById('msgFlower');
+    if (!name) { alert("請輸入花朵名稱"); return; }
+    msg.style.display = 'block'; msg.style.color = "#333"; msg.innerText = "⏳ 正在發布花朵...";
+    try {
+        await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({
+            type: "addFlower", flowerName: name, category: cat, image: "", score: 0 
+        })});
+        msg.innerText = "✅ 花朵發布成功！"; msg.style.color = "#27ae60";
+        document.getElementById('newFName').value = '';
+        init(true);
+    } catch (e) { msg.innerText = "❌ 發布失敗"; msg.style.color = "#e74c3c"; }
+}
+
+/* --- 個人設定修改 --- */
+function openProfileModal() {
+    const idInput = document.getElementById('profID');
+    const idHint = document.getElementById('idHint');
+    idInput.value = currentUser.loginID;
+    document.getElementById('profName').value = currentUser.displayName;
+    document.getElementById('profPwd').value = currentUser.pwd;
+    if(currentUser.hasChangedID) {
+        idInput.disabled = true; idInput.style.background = "#f0f0f0"; idHint.innerText = "(不可再改)";
+    } else {
+        idInput.disabled = false; idInput.style.background = "#fff"; idHint.innerText = "(限改一次)";
+    }
+    openModal('profileModal');
+}
+
+async function saveProfile() {
+    const newID = document.getElementById('profID').value.trim();
+    const newName = document.getElementById('profName').value.trim();
+    const newPwd = document.getElementById('profPwd').value.trim();
+    const oldID = currentUser.loginID;
+    if (!newID || !newName || !newPwd) return alert("請填寫完整");
+    if (!confirm("確定要修改嗎？修改後系統將同步花牆名單並重新登入。")) return;
+    document.getElementById('loading').style.display = 'flex';
+    document.getElementById('loading').innerText = "⏳ 正在同步全體資料庫...";
+    try {
+        if (newID !== oldID) {
+            await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type: "changeAccountID", oldID: oldID, newID: newID })});
+        }
+        await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type: "updateMemberProfile", loginID: newID, newPwd: newPwd, newDisplayName: newName })});
+        alert("修改成功！"); location.reload();
+    } catch (e) { alert("修改失敗"); document.getElementById('loading').style.display = 'none'; }
+}
+
+/* --- 渲染功能：競賽名單寬度優化 --- */
+function renderCompTable() {
+    const container = document.getElementById('compTableContainer'); container.innerHTML = '';
+    const map = {};
+    db.forEach(f => f.competers.forEach(n => { if(!map[n]) map[n]=[]; map[n].push(f.name); }));
+    const entries = Object.entries(map);
+    if(entries.length === 0) { container.innerHTML = "<p style='padding:20px; text-align:center;'>尚無報名</p>"; return; }
+    
+    entries.forEach(([u, fList]) => {
+        const row = document.createElement('div'); row.className = 'comp-row';
+        row.innerHTML = `<div class="comp-name">${u}</div><div class="comp-flowers">${fList.join('、')}</div>`;
+        container.appendChild(row);
+    });
+
+    // 關鍵修正 1：動圖計算最長寬度
+    setTimeout(() => {
+        const nameEls = container.querySelectorAll('.comp-name');
+        let maxW = 0;
+        nameEls.forEach(el => {
+            el.style.width = 'auto'; // 重置寬度以便測量
+            if(el.offsetWidth > maxW) maxW = el.offsetWidth;
+        });
+        nameEls.forEach(el => { el.style.width = (maxW + 10) + 'px'; });
+    }, 50);
+
+    document.getElementById('compJoinBtn').style.display = currentUser ? 'block' : 'none';
+}
+
+/* --- 渲染功能：移除管理員資產 --- */
+function showMemberPage() {
+    document.getElementById('memberPage').style.display = 'block';
+    const mList = document.getElementById('mList'); mList.innerHTML = '';
+    
+    // 關鍵修正 2：過濾掉 admin
+    const filteredUsers = users.filter(u => u.loginID !== 'admin');
+    
+    filteredUsers.forEach(u => {
+        const b = document.createElement('button'); b.className = 'filter-btn'; b.innerText = u.displayName;
+        b.onclick = () => {
+            document.getElementById('memberHeader').innerText = u.displayName; mList.style.display = 'none';
+            const box = document.getElementById('memberFlowers'); box.innerHTML = '';
+            db.filter(f => f.owners.includes(u.displayName)).forEach(f => { const div = createFlowerElement(f); div.onclick = () => showDetail(f); box.appendChild(div); });
+        };
+        mList.appendChild(b);
+    });
+}
+
+/* --- 基礎功能與渲染 (保持一致) --- */
 function render() {
     const box = document.getElementById('flowers'), compView = document.getElementById('competitionView');
-    if (currentTab === "🏆 競賽") { box.style.display = 'none'; compView.style.display = 'block'; renderCompTable(); }
+    if (currentTab === "🏆 競賽花") { box.style.display = 'none'; compView.style.display = 'block'; renderCompTable(); }
     else {
         box.style.display = 'grid'; compView.style.display = 'none'; box.innerHTML = '';
         const filtered = currentTab === "全部" ? db : db.filter(f => f.category === currentTab);
@@ -238,50 +326,11 @@ function createFlowerElement(f) {
     return div;
 }
 
-function showDetail(f) {
-    document.getElementById('detailTitle').innerText = f.name;
-    document.getElementById('ownerListText').innerHTML = `<b>👑 擁有人名單：</b><br>${f.owners.length > 0 ? f.owners.join('、') : '目前無人擁有'}`;
-    openModal('detailModal');
-}
-
-// 核心更新：自動計算最長姓名寬度並對齊
-function renderCompTable() {
-    const container = document.getElementById('compTableContainer'); container.innerHTML = '';
-    const map = {};
-    db.forEach(f => f.competers.forEach(n => { if(!map[n]) map[n]=[]; map[n].push(f.name); }));
-    const entries = Object.entries(map);
-    if(entries.length === 0) { container.innerHTML = "<p style='padding:20px; text-align:center;'>尚無報名</p>"; return; }
-    
-    entries.forEach(([u, fList]) => {
-        const row = document.createElement('div'); row.className = 'comp-row';
-        row.innerHTML = `<div class="comp-name">${u}</div><div class="comp-flowers">${fList.join('、')}</div>`;
-        container.appendChild(row);
-    });
-
-    // 動態對齊寬度邏輯
-    setTimeout(() => {
-        const nameEls = container.querySelectorAll('.comp-name');
-        let maxW = 0;
-        nameEls.forEach(el => {
-            el.style.width = 'auto'; // 先重置
-            if(el.offsetWidth > maxW) maxW = el.offsetWidth;
-        });
-        nameEls.forEach(el => { el.style.width = (maxW + 5) + 'px'; });
-    }, 10);
-
-    document.getElementById('compJoinBtn').style.display = currentUser ? 'block' : 'none';
-}
-
 function openCompModal() {
     const list = document.getElementById('compCheckList'); list.innerHTML = '';
     db.filter(f => f.owners.includes(currentUser.displayName)).forEach(f => {
         const isComping = f.competers.includes(currentUser.displayName);
-        list.innerHTML += `
-            <div style="padding:15px; border-bottom:1px solid #eee; display:flex; align-items:center;">
-                <input type="checkbox" id="c_${f.name}" ${isComping?'checked':''} style="width:22px; height:22px; margin-right:12px;"> 
-                <span style="flex:1; font-weight:bold;">${f.name}</span>
-                <span style="color:var(--gold); font-weight:bold; font-size:12px;">${f.score}分</span>
-            </div>`;
+        list.innerHTML += `<div style="padding:15px; border-bottom:1px solid #eee; display:flex; align-items:center;"><input type="checkbox" id="c_${f.name}" ${isComping?'checked':''} style="width:22px; height:22px; margin-right:12px;"><span style="flex:1; font-weight:bold;">${f.name}</span><span style="color:var(--gold); font-weight:bold; font-size:12px;">${f.score}分</span></div>`;
     });
     openModal('compModal');
 }
@@ -326,26 +375,16 @@ function toggleCompSummary(s) {
         });
     }
 }
-function hideMemberPage() { document.getElementById('memberPage').style.display = 'none'; }
-function showMemberPage() {
-    document.getElementById('memberPage').style.display = 'block';
-    const mList = document.getElementById('mList'); mList.innerHTML = '';
-    users.forEach(u => {
-        const b = document.createElement('button'); b.className = 'filter-btn'; b.innerText = u.displayName;
-        b.onclick = () => {
-            document.getElementById('memberHeader').innerText = u.displayName; mList.style.display = 'none';
-            const box = document.getElementById('memberFlowers'); box.innerHTML = '';
-            db.filter(f => f.owners.includes(u.displayName)).forEach(f => {
-                const div = createFlowerElement(f); div.onclick = () => showDetail(f); box.appendChild(div);
-            });
-        };
-        mList.appendChild(b);
-    });
+
+function showDetail(f) {
+    document.getElementById('detailTitle').innerText = f.name;
+    document.getElementById('ownerListText').innerHTML = `<b>👑 擁有人名單：</b><br>${f.owners.length > 0 ? f.owners.join('、') : '目前無人擁有'}`;
+    openModal('detailModal');
 }
+function hideMemberPage() { document.getElementById('memberPage').style.display = 'none'; }
 function openModal(id) { document.getElementById(id).style.display = 'flex'; }
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 init();
 </script>
 </body>
 </html>
-
