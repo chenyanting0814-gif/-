@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>紫色瘋人院</title>
     <style>
-        :root { --main: #6a5acd; --bg: #f5f5f7; --success: #27ae60; --error: #e74c3c; --dark: #2c3e50; --gold: #f1c40f; --table-border: #dee2e6; }
+        :root { --main: #6a5acd; --bg: #f5f5f7; --success: #27ae60; --error: #e74c3c; --dark: #2c3e50; --gold: #f1c40f; }
         body { font-family: "Microsoft JhengHei", sans-serif; margin: 0; background: var(--bg); color: #333; overflow: hidden; height: 100vh; }
         
         /* 導覽列 */
@@ -21,7 +21,7 @@
         .filter-btn.special { border-color: var(--gold); color: #d4af37; }
         .filter-btn.special.active { background: var(--gold); color: #333; }
 
-        /* 花牆 */
+        /* 花牆卡片 */
         #flowers { display: grid; grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); gap: 10px; padding: 10px; }
         .flower { background: white; padding: 6px; border-radius: 10px; text-align: center; border: 2.5px solid transparent; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; cursor: pointer; }
         .flower img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 6px; background: #eee; }
@@ -36,14 +36,14 @@
         .modal-content input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
         .modal-content input:disabled { background: #f5f5f5; color: #999; cursor: not-allowed; }
         
-        /* --- 修正處：報名選單 UI 優化 --- */
+        /* 報名選單 UI 優化 */
         .comp-select-item { display: flex; align-items: center; padding: 12px 10px; border-bottom: 1px solid #eee; background: #fff; text-align: left; }
         .comp-select-item input[type="checkbox"] { width: 16px; height: 16px; margin: 0 12px 0 0; cursor: pointer; flex-shrink: 0; }
-        
-        .comp-info-wrapper { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; }
+        .comp-info-wrapper { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; overflow: hidden; }
         .comp-flower-name { font-size: 15px; font-weight: bold; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .comp-score-tag { background: #fff8e1; color: #b8860b; border: 1px solid var(--gold); font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: bold; white-space: nowrap; flex-shrink: 0; }
 
+        /* 其他元件 */
         #saveBtn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 12px 30px; background: var(--success); color: white; border: none; border-radius: 50px; font-weight: bold; z-index: 1500; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
     </style>
@@ -56,7 +56,7 @@
     <div style="font-size: 14px; font-weight: bold; color: var(--gold);">💜 紫色瘋人院</div>
     <div class="nav-right">
         <button onclick="showMemberPage()">成員資產</button>
-        <span id="loginBtn" class="login-link" onclick="openModal('loginModal')" style="color:#aaa; font-size:11px; text-decoration:underline; cursor:pointer;">登入</span>
+        <span id="loginBtn" onclick="openModal('loginModal')" style="color:#aaa; font-size:11px; text-decoration:underline; cursor:pointer;">登入</span>
         <div id="userArea" style="display:none; align-items: center; gap: 6px;">
             <span id="userGreet" style="font-size: 11px; color: #fff;"></span>
             <button onclick="openAccModal()" style="background:#555; padding:4px 8px; font-size:10px;">改帳密</button>
@@ -105,7 +105,7 @@
 </div>
 
 <div id="memberPage" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:2000; padding-top:60px;">
-    <button onclick="hideMemberPage()" style="position:absolute; top:12px; right:15px; width:35px; height:35px; border-radius:50%; background:#333; color:white; border:none;">✕</button>
+    <button onclick="hideMemberPage()" style="position:absolute; top:12px; right:15px; width:35px; height:35px; border-radius:50%; background:#333; color:white; border:none; font-size:18px;">✕</button>
     <div id="memberList" style="display:flex; flex-wrap:wrap; gap:8px; padding:15px; justify-content:center; background:white; border-bottom:1px solid #ddd;"></div>
     <div id="memberFlowers" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(95px, 1fr)); gap:10px; padding:15px; overflow-y:auto; height:calc(100% - 150px);"></div>
 </div>
@@ -113,7 +113,7 @@
 <button onclick="manualSync()" id="saveBtn">💾 儲存修改內容</button>
 
 <script>
-// --- 注意：請務必替換下方 API_URL ---
+// --- 重要：替換為你的 GAS 網址 ---
 const API_URL = "https://script.google.com/macros/s/AKfycbyT64IkZksYdYkLHFXiZu22AIV5yew5q3JuZJuRrnTp8_Iy9vVl7Jh9efFfH2G3voT8/exec"; 
 const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/chenyanting0814-gif/-/main/";
 
@@ -141,7 +141,7 @@ async function init() {
         updateFilterBar();
         document.getElementById('loading').style.display = 'none';
         render();
-    } catch (e) { document.getElementById('loading').innerHTML = "<div style='color:red;'>❌ 連線失敗<br><small>請確認 GAS 網址與權限</small></div>"; }
+    } catch (e) { document.getElementById('loading').innerHTML = "<div style='color:red;'>❌ 連線失敗<br><small>請確認部署網址與權限</small></div>"; }
 }
 
 function login() {
@@ -178,7 +178,7 @@ async function submitAccChange() {
         if (newPWD !== currentUser.pwd) {
             await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type: "changePassword", oldName: currentUser.loginID, newValue: newPWD }) });
         }
-        alert("修改成功，請重新登入！"); location.reload();
+        alert("修改成功！請重新登入"); location.reload();
     } catch (e) { alert("更新失敗"); document.getElementById('loading').style.display = 'none'; }
 }
 
@@ -198,7 +198,12 @@ function render() {
             div.innerHTML = `<div class="score-tag">${f.score}pt</div><img src="${imgUrl}"><div class="flower-name">${f.name}</div>`;
             div.onclick = () => {
                 if (!currentUser) alert(`🌸 持有：${f.owners.join('、')||'無'}`);
-                else { const idx = f.owners.indexOf(currentUser.displayName); if (idx > -1) f.owners.splice(idx, 1); else f.owners.push(currentUser.displayName); document.getElementById('saveBtn').style.display = 'block'; render(); }
+                else { 
+                    const idx = f.owners.indexOf(currentUser.displayName); 
+                    if (idx > -1) f.owners.splice(idx, 1); else f.owners.push(currentUser.displayName); 
+                    document.getElementById('saveBtn').style.display = 'block'; 
+                    render(); 
+                }
             };
             box.appendChild(div);
         });
@@ -209,7 +214,11 @@ function renderCompTable() {
     const tbody = document.getElementById('compTableBody'); tbody.innerHTML = '';
     const map = {};
     db.forEach(f => f.competers.forEach(n => { if(!map[n]) map[n]=[]; map[n].push(f.name); }));
-    Object.keys(map).forEach(u => { const tr = document.createElement('tr'); tr.innerHTML = `<td style="padding:10px; border:1px solid #ddd;"><b>${u}</b></td><td style="padding:10px; border:1px solid #ddd;">${map[u].join('、')}</td>`; tbody.appendChild(tr); });
+    Object.keys(map).forEach(u => { 
+        const tr = document.createElement('tr'); 
+        tr.innerHTML = `<td style="padding:10px; border:1px solid #ddd;"><b>${u}</b></td><td style="padding:10px; border:1px solid #ddd;">${map[u].join('、')}</td>`; 
+        tbody.appendChild(tr); 
+    });
     document.getElementById('compJoinBtn').style.display = currentUser ? 'block' : 'none';
 }
 
@@ -248,16 +257,7 @@ async function manualSync() {
             body: JSON.stringify({ type: "updateOwners", flowerName: f.name, newOwners: f.owners.join(','), newCompeters: f.competers.join(',') }) 
         })));
         btn.innerText = "💾 儲存成功"; setTimeout(() => btn.style.display = 'none', 1500);
-    } catch(e) { alert("儲-存失敗"); }
-}
-
-function updateFilterBar() {
-    const cats = ["🏆 本週競賽花", "全部", ...new Set(db.map(f => f.category))];
-    const fBar = document.getElementById('filterBar'); fBar.innerHTML = '';
-    cats.forEach(cat => {
-        const btn = document.createElement('button'); btn.className = 'filter-btn' + (cat === currentTab ? ' active' : '') + (cat === "🏆 本週競賽花" ? " special" : "");
-        btn.innerText = cat; btn.onclick = () => { currentTab = cat; render(); updateFilterBar(); }; fBar.appendChild(btn);
-    });
+    } catch(e) { alert("儲存失敗"); }
 }
 
 function showMemberPage() {
@@ -271,10 +271,23 @@ function showMemberPage() {
                 const div = document.createElement('div'); div.className = 'flower owned';
                 let imgUrl = f.image.startsWith("http") ? f.image : GITHUB_RAW_BASE + encodeURI(`images/${f.category}/${f.image||f.category+'-'+f.name}.jpg`);
                 div.innerHTML = `<div class="score-tag">${f.score}pt</div><img src="${imgUrl}"><div class="flower-name">${f.name}</div>`;
+                div.onclick = (e) => {
+                    e.stopPropagation();
+                    alert(`🌸【${f.name}】\n目前持有人：\n${f.owners.join('、') || '暫無人持有'}`);
+                };
                 mFlowers.appendChild(div);
             });
         };
         list.appendChild(btn);
+    });
+}
+
+function updateFilterBar() {
+    const cats = ["🏆 本週競賽花", "全部", ...new Set(db.map(f => f.category))];
+    const fBar = document.getElementById('filterBar'); fBar.innerHTML = '';
+    cats.forEach(cat => {
+        const btn = document.createElement('button'); btn.className = 'filter-btn' + (cat === currentTab ? ' active' : '') + (cat === "🏆 本週競賽花" ? " special" : "");
+        btn.innerText = cat; btn.onclick = () => { currentTab = cat; render(); updateFilterBar(); }; fBar.appendChild(btn);
     });
 }
 function hideMemberPage() { document.getElementById('memberPage').style.display = 'none'; }
