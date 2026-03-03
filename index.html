@@ -3,78 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>紫色瘋人院</title>
+    <title>紫色瘋人院 - 系統中心</title>
     <style>
         :root { --main: #6a5acd; --bg: #f5f5f7; --success: #27ae60; --error: #e74c3c; --dark: #2c3e50; --gold: #f1c40f; }
-        body { font-family: "Microsoft JhengHei", sans-serif; margin: 0; background: var(--bg); color: #333; overflow: hidden; height: 100vh; }
+        body { font-family: "Microsoft JhengHei", sans-serif; margin: 0; background: var(--bg); color: #333; height: 100vh; overflow: hidden; }
         .admin-bar { position: fixed; top: 0; width: 100%; height: 50px; background: var(--dark); color: white; display: flex; align-items: center; padding: 0 15px; z-index: 1000; box-sizing: border-box; justify-content: space-between; }
         .nav-right { display: flex; gap: 8px; align-items: center; }
         .admin-bar button { background: var(--main); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: bold; }
         .main-content { padding-top: 50px; height: 100vh; overflow-y: auto; box-sizing: border-box; display: flex; flex-direction: column; }
-        .filter-bar { background: white; padding: 10px; display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 900; }
-        .filter-btn { flex: 1 1 auto; min-width: 65px; max-width: 100px; padding: 8px 4px; border-radius: 8px; border: 1.5px solid #eee; background: #fff; font-size: 11px; font-weight: bold; cursor: pointer; text-align: center; }
-        .filter-btn.active { background: var(--main); color: white; border-color: var(--main); }
-        .filter-btn.special { border-color: var(--gold); color: #d4af37; }
-        .filter-btn.special.active { background: var(--gold); color: #333; }
-        #flowers { display: grid; grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); gap: 10px; padding: 10px; }
-        .flower { background: white; padding: 6px; border-radius: 10px; text-align: center; border: 2.5px solid transparent; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; cursor: pointer; }
-        .flower img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 6px; background: #eee; }
-        .flower-name { font-size: 11px; font-weight: bold; margin-top: 5px; color: #000; min-height: 24px; display: flex; align-items: center; justify-content: center; }
-        .score-tag { position: absolute; top: 4px; right: 4px; background: var(--gold); color: #333; font-size: 9px; padding: 1px 5px; border-radius: 8px; font-weight: bold; z-index: 5; }
+        
+        /* 管理員專用 */
+        #adminDashboard { display: none; padding: 20px; background: #eaecf0; flex: 1; }
+        .admin-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        .admin-card h3 { margin: 0 0 10px 0; font-size: 15px; border-left: 4px solid var(--main); padding-left: 8px; }
+        .status-msg { font-size: 12px; margin-top: 8px; font-weight: bold; display: none; }
+        .status-success { color: var(--success); }
+        .status-error { color: var(--error); }
+
+        /* 使用者花牆 */
+        #userContent { display: flex; flex-direction: column; flex: 1; }
+        .filter-bar { background: white; padding: 10px; display: flex; overflow-x: auto; gap: 6px; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 900; }
+        .filter-btn { flex: 0 0 auto; padding: 8px 12px; border-radius: 8px; border: 1.5px solid #eee; background: #fff; font-size: 11px; font-weight: bold; cursor: pointer; }
+        .filter-btn.active { background: var(--main); color: white; }
+        
+        #flowers, #memberFlowers { display: grid; grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); gap: 10px; padding: 10px; }
+        .flower { background: white; padding: 8px; border-radius: 12px; text-align: center; border: 2.5px solid transparent; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; cursor: pointer; }
+        .flower img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 8px; background: #eee; }
         .flower.owned { border-color: var(--main); }
         .flower.not-owned img { filter: grayscale(100%); opacity: 0.5; }
+        
+        .score-badge { position: absolute; top: 3px; right: 3px; background: rgba(0,0,0,0.7); color: var(--gold); font-size: 10px; padding: 2px 5px; border-radius: 6px; font-weight: bold; z-index: 5; }
+        .flower-name { font-size: 11px; margin-top: 6px; font-weight: bold; }
+
+        /* 競賽樣式 - 修正名稱固定寬度 */
+        .comp-row { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #eee; background: white; }
+        .comp-name { flex: 0 0 auto; font-weight: bold; color: var(--dark); font-size: 14px; border-right: 1px solid #ddd; margin-right: 15px; white-space: nowrap; padding-right: 5px; }
+        .comp-flowers { flex: 1; font-size: 13px; color: #666; }
+        
+        #summaryFlowers { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; padding: 15px; }
+        .sum-flower { background: white; padding: 10px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); position: relative; }
+        .sum-flower b { display: block; font-size: 13px; color: var(--main); margin-bottom: 5px; }
+        .sum-flower p { font-size: 11px; color: var(--error); margin: 0; font-weight: bold; }
+
+        input, select { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 20px; border-radius: 15px; width: 320px; text-align: center; box-sizing: border-box; }
-        .modal-content input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .comp-select-item { display: flex; align-items: center; padding: 12px 10px; border-bottom: 1px solid #eee; background: #fff; text-align: left; }
-        .comp-select-item input[type="checkbox"] { width: 16px; height: 16px; margin: 0 12px 0 0; cursor: pointer; flex-shrink: 0; }
-        .comp-info-wrapper { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; overflow: hidden; }
-        .comp-flower-name { font-size: 15px; font-weight: bold; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .comp-score-tag { background: #fff8e1; color: #b8860b; border: 1px solid var(--gold); font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: bold; flex-shrink: 0; }
+        .modal-content { background: white; padding: 20px; border-radius: 15px; width: 85%; max-width: 350px; text-align: center; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column; }
+        
+        /* 報名彈窗內容區塊捲動 */
+        #compCheckList { text-align: left; overflow-y: auto; flex: 1; margin-top: 10px; border-top: 1px solid #eee; }
+
         #saveBtn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 12px 30px; background: var(--success); color: white; border: none; border-radius: 50px; font-weight: bold; z-index: 1500; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 9999; }
     </style>
 </head>
 <body>
 
-<div id="loading">🌸<br>資料同步中...</div>
+<div id="loading">🌸 資料載入中...</div>
 
 <div class="admin-bar">
     <div style="font-size: 14px; font-weight: bold; color: var(--gold);">💜 紫色瘋人院</div>
     <div class="nav-right">
-        <button onclick="showMemberPage()">成員資產</button>
+        <button id="memberAssetsBtn" onclick="showMemberPage()">成員資產</button>
         <span id="loginBtn" onclick="openModal('loginModal')" style="color:#aaa; font-size:11px; text-decoration:underline; cursor:pointer;">登入</span>
-        <div id="userArea" style="display:none; align-items: center; gap: 6px;">
-            <span id="userGreet" style="font-size: 11px; color: #fff;"></span>
-            <button onclick="openAccModal()" style="background:#555; padding:4px 8px; font-size:10px;">改帳密</button>
-            <button onclick="location.reload()" style="background:var(--error); padding:4px 8px; font-size:10px;">登出</button>
+        <div id="userArea" style="display:none; align-items:center; gap:6px;">
+            <span id="userGreet" style="font-size:11px;"></span>
+            <button onclick="location.reload()" style="background:var(--error); font-size:10px;">登出</button>
         </div>
     </div>
 </div>
 
 <div class="main-content">
-    <div class="filter-bar" id="filterBar"></div>
-    <div id="flowers"></div>
-    <div id="competitionView" style="display:none; padding:15px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <h3 style="margin:0; font-size:16px;">🏆 本週競賽報名</h3>
-            <button id="compJoinBtn" onclick="openCompModal()" style="display:none; background:var(--gold); color:#333; border:none; padding:6px 12px; border-radius:4px; font-weight:bold; font-size:12px;">我要報名</button>
+    <div id="adminDashboard">
+        <div class="admin-card">
+            <h3>👤 新增人員</h3>
+            <input type="text" id="newUserAcc" placeholder="請輸入帳號">
+            <input type="text" id="newUserPwd" placeholder="請輸入密碼">
+            <button onclick="submitNewMember()" style="width:100%; padding:10px; background:var(--main); color:white; border:none; border-radius:8px; font-weight:bold;">建立帳號</button>
+            <div id="msgMember" class="status-msg"></div>
         </div>
-        <table style="width:100%; border-collapse:collapse; background:white; font-size:13px; border:1px solid #ddd;">
-            <thead style="background:#f8f9fa;"><tr><th style="padding:10px; border:1px solid #ddd; width:80px;">成員</th><th style="padding:10px; border:1px solid #ddd;">報名花朵</th></tr></thead>
-            <tbody id="compTableBody"></tbody>
-        </table>
+        <div class="admin-card">
+            <h3>🌸 新增花朵</h3>
+            <input type="text" id="newFName" placeholder="請輸入花朵名稱">
+            <select id="newFCat">
+                <option value="紅">🔴 紅</option>
+                <option value="金">🟡 金</option>
+                <option value="紫">🟣 紫</option>
+                <option value="藍">🔵 藍</option>
+            </select>
+            <button onclick="submitNewFlower()" style="width:100%; padding:10px; background:var(--success); color:white; border:none; border-radius:8px; font-weight:bold;">發布花朵</button>
+            <div id="msgFlower" class="status-msg"></div>
+        </div>
+    </div>
+
+    <div id="userContent">
+        <div class="filter-bar" id="filterBar"></div>
+        <div id="flowers"></div>
+        <div id="competitionView" style="display:none; padding:15px;">
+            <div id="compMainArea">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h3 style="margin:0; font-size:16px;">🏆 競賽名單</h3>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="toggleCompSummary(true)" style="background:#555; color:white; border:none; padding:6px 10px; border-radius:4px; font-size:12px;">📊 報名花牆</button>
+                        <button id="compJoinBtn" onclick="openCompModal()" style="display:none; background:var(--gold); color:#333; border:none; padding:6px 10px; border-radius:4px; font-size:12px; font-weight:bold;">我要報名</button>
+                    </div>
+                </div>
+                <div id="compTableContainer" style="background:white; border-radius:8px; border:1px solid #ddd; overflow:hidden;"></div>
+            </div>
+            <div id="compSummaryPage" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h3 style="margin:0; font-size:16px;">🔥 報名統整花牆</h3>
+                    <button onclick="toggleCompSummary(false)" style="background:#ccc; padding:6px 12px; border-radius:4px; font-size:12px;">返回</button>
+                </div>
+                <div id="summaryFlowers"></div>
+            </div>
+        </div>
     </div>
 </div>
 
-<div id="loginModal" class="modal"><div class="modal-content"><h3>系統登入</h3><input type="text" id="uIn" placeholder="帳號"><input type="password" id="pIn" placeholder="密碼"><button onclick="login()" style="width:100%; padding:12px; background:var(--main); color:white; border:none; border-radius:8px; font-weight:bold;">確定</button><button onclick="closeModal('loginModal')" style="margin-top:12px; background:none; border:none; color:#888;">取消</button></div></div>
-<div id="accModal" class="modal"><div class="modal-content"><h3>修改帳密</h3><input type="text" id="editUID" placeholder="新帳號"><input type="password" id="editPWD" placeholder="新密碼"><button onclick="submitAccChange()" style="width:100%; padding:12px; background:var(--main); color:white; border:none; border-radius:8px;">儲存修改</button><button onclick="closeModal('accModal')" style="margin-top:10px; background:none; border:none; color:#888;">取消</button></div></div>
-<div id="compModal" class="modal"><div class="modal-content"><h3>報名競賽</h3><div id="compCheckList" style="max-height:350px; overflow-y:auto; border:1px solid #eee; border-radius:8px; margin-bottom:15px;"></div><button onclick="saveCompSelection()" style="width:100%; padding:12px; background:var(--success); color:white; border:none; border-radius:8px;">確認送出</button><button onclick="closeModal('compModal')" style="margin-top:10px; background:none; border:none; color:#888;">取消</button></div></div>
+<div id="detailModal" class="modal" onclick="closeModal('detailModal')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h3 id="detailTitle"></h3>
+        <div id="ownerListText" style="padding:15px; line-height:1.6; text-align:left; background:#f5f5f5; border-radius:8px; margin-bottom:10px;"></div>
+        <button onclick="closeModal('detailModal')" style="width:100%; padding:10px; background:#ddd; border:none; border-radius:8px;">關閉</button>
+    </div>
+</div>
 
-<div id="memberPage" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:2000; padding-top:60px;">
-    <button onclick="hideMemberPage()" style="position:absolute; top:12px; right:15px; width:35px; height:35px; border-radius:50%; background:#333; color:white; border:none;">✕</button>
-    <div id="memberList" style="display:flex; flex-wrap:wrap; gap:8px; padding:15px; justify-content:center; background:white;"></div>
-    <div id="memberFlowers" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(95px, 1fr)); gap:10px; padding:15px; overflow-y:auto; height:calc(100% - 150px);"></div>
+<div id="loginModal" class="modal"><div class="modal-content"><h3>系統登入</h3><input type="text" id="uIn" placeholder="帳號"><input type="password" id="pIn" placeholder="密碼"><button onclick="login()" style="width:100%; padding:12px; background:var(--main); color:white; border:none; border-radius:8px;">登入</button></div></div>
+
+<div id="compModal" class="modal">
+    <div class="modal-content">
+        <h3 style="margin-bottom:10px;">選擇報名花朵</h3>
+        <button onclick="saveCompSelection()" style="width:100%; padding:12px; background:var(--success); color:white; border:none; border-radius:8px; font-weight:bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">✅ 確認報名並關閉</button>
+        <div id="compCheckList"></div>
+    </div>
+</div>
+
+<div id="memberPage" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:2000; padding-top:50px;">
+    <button onclick="hideMemberPage()" style="position:absolute; top:10px; right:10px; width:30px; height:30px; border-radius:50%; background:#333; color:white; border:none;">✕</button>
+    <div id="memberHeader" onclick="document.getElementById('mList').style.display='flex'" style="background:white; padding:15px; text-align:center; color:var(--main); font-weight:bold; border-bottom:1px solid #ddd;">點擊選擇成員</div>
+    <div id="mList" style="display:none; flex-wrap:wrap; gap:8px; padding:10px; background:#eee; max-height:150px; overflow-y:auto;"></div>
+    <div id="memberFlowers"></div>
 </div>
 
 <button onclick="manualSync()" id="saveBtn">💾 儲存修改內容</button>
@@ -82,67 +150,138 @@
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbyT64IkZksYdYkLHFXiZu22AIV5yew5q3JuZJuRrnTp8_Iy9vVl7Jh9efFfH2G3voT8/exec"; 
 const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/chenyanting0814-gif/-/main/";
+let db = [], users = [], currentUser = null, currentTab = "全部";
 
-let db = []; let users = []; let currentUser = null; let currentTab = "全部";
-
-async function init() {
+async function init(silent = false) {
+    if(!silent) document.getElementById('loading').style.display = 'flex';
     try {
-        const res = await fetch(API_URL);
-        const data = await res.json();
-        users = data.members.slice(1).map(row => ({ loginID: row[0]?.toString().trim()||"", pwd: row[1]?.toString().trim()||"", displayName: row[2]?.toString().trim()||row[0], isAccChanged: row[3] == 1 }));
-        db = data.flowers.slice(1).map(row => ({
-            name: row[0]?.toString().trim() || "",
-            category: row[1]?.toString().trim() || "未分類",
-            image: row[2]?.toString().trim() || "", 
-            owners: row[3]?.toString().split(',').map(o=>o.trim()).filter(o=>o!=='') || [],
-            score: row[4] || 0,
-            competers: row[5]?.toString().split(',').map(o=>o.trim()).filter(o=>o!=='') || []
+        const res = await fetch(API_URL); const data = await res.json();
+        users = data.members.slice(1).map(row => ({ loginID: row[0]?.toString().trim(), pwd: row[1]?.toString().trim(), displayName: row[2]?.toString().trim() || row[0] }));
+        db = data.flowers.slice(1).map(row => ({ 
+            name: row[0]?.toString().trim(), category: row[1], image: row[2], 
+            owners: row[3]?.toString().split(',').filter(o=>o), score: row[4] || 0,
+            competers: row[5]?.toString().split(',').filter(o=>o) 
         }));
-        updateFilterBar(); document.getElementById('loading').style.display = 'none'; render();
-    } catch (e) { document.getElementById('loading').innerHTML = "❌ 連線失敗"; }
+        updateFilterBar(); render();
+        document.getElementById('loading').style.display = 'none';
+    } catch (e) { document.getElementById('loading').innerText = "❌ 連線失敗"; }
+}
+
+function showStatus(id, msg, err=false) {
+    const el = document.getElementById(id); el.innerText = msg;
+    el.className = 'status-msg ' + (err ? 'status-error' : 'status-success'); el.style.display = 'block';
+    if(!err) setTimeout(() => el.style.display = 'none', 3000);
+}
+
+async function submitNewMember() {
+    const acc = document.getElementById('newUserAcc').value.trim(), pw = document.getElementById('newUserPwd').value.trim();
+    if(!acc || !pw) return showStatus('msgMember', '請填寫完整', true);
+    showStatus('msgMember', '⏳ 處理中...');
+    try {
+        await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type: "addMember", loginID: acc, pwd: pw, displayName: acc }) });
+        showStatus('msgMember', '✅ 成功'); document.getElementById('newUserAcc').value = ''; document.getElementById('newUserPwd').value = ''; await init(true);
+    } catch (e) { showStatus('msgMember', '❌ 失敗', true); }
+}
+
+async function submitNewFlower() {
+    const name = document.getElementById('newFName').value.trim(), cat = document.getElementById('newFCat').value;
+    if(!name) return showStatus('msgFlower', '請輸入花名', true);
+    showStatus('msgFlower', '⏳ 發布中...');
+    const autoImg = `${cat}-${name}`;
+    try {
+        await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type: "addFlower", flowerName: name, category: cat, image: autoImg, score: 0 }) });
+        showStatus('msgFlower', `✅ 成功：${autoImg}`); document.getElementById('newFName').value = ''; await init(true);
+    } catch (e) { showStatus('msgFlower', '❌ 失敗', true); }
 }
 
 function login() {
     const u = document.getElementById('uIn').value.trim(), p = document.getElementById('pIn').value.trim();
     const found = users.find(x => x.loginID === u && x.pwd === p);
-    if(found) { currentUser = found; closeModal('loginModal'); document.getElementById('loginBtn').style.display = 'none'; document.getElementById('userArea').style.display = 'flex'; document.getElementById('userGreet').innerText = found.displayName; render(); } else alert("帳密錯誤");
+    if(found) {
+        currentUser = found; closeModal('loginModal');
+        document.getElementById('userGreet').innerText = found.displayName;
+        document.getElementById('userArea').style.display = 'flex';
+        document.getElementById('loginBtn').style.display = 'none';
+        if(u === 'admin') { document.getElementById('userContent').style.display = 'none'; document.getElementById('adminDashboard').style.display = 'block'; }
+        else { render(); }
+    } else alert("帳密錯誤");
 }
 
 function render() {
     const box = document.getElementById('flowers'), compView = document.getElementById('competitionView');
-    if (currentTab === "🏆 本週競賽花") { box.style.display = 'none'; compView.style.display = 'block'; renderCompTable(); }
+    if (currentTab === "🏆 競賽") { box.style.display = 'none'; compView.style.display = 'block'; renderCompTable(); }
     else {
         box.style.display = 'grid'; compView.style.display = 'none'; box.innerHTML = '';
         const filtered = currentTab === "全部" ? db : db.filter(f => f.category === currentTab);
         filtered.forEach(f => {
-            const div = document.createElement('div');
-            const isOwned = currentUser && f.owners.includes(currentUser.displayName);
-            div.className = 'flower ' + (isOwned || !currentUser ? 'owned' : 'not-owned');
-            let imgUrl = f.image.startsWith("http") ? f.image : GITHUB_RAW_BASE + encodeURI(`images/${f.category}/${f.image||f.category+'-'+f.name}.jpg`);
-            div.innerHTML = `<div class="score-tag">${f.score}pt</div><img src="${imgUrl}"><div class="flower-name">${f.name}</div>`;
-            div.onclick = () => { if (!currentUser) alert(`🌸 持有：${f.owners.join('、')||'無'}`); else { const idx = f.owners.indexOf(currentUser.displayName); if (idx > -1) f.owners.splice(idx, 1); else f.owners.push(currentUser.displayName); document.getElementById('saveBtn').style.display = 'block'; render(); } };
+            const div = createFlowerElement(f);
+            div.onclick = () => {
+                if (!currentUser) showDetail(f);
+                else {
+                    const idx = f.owners.indexOf(currentUser.displayName);
+                    if (idx > -1) f.owners.splice(idx, 1); else f.owners.push(currentUser.displayName);
+                    document.getElementById('saveBtn').style.display = 'block'; render();
+                }
+            };
             box.appendChild(div);
         });
     }
 }
 
+function createFlowerElement(f) {
+    const div = document.createElement('div');
+    const isOwned = currentUser && f.owners.includes(currentUser.displayName);
+    div.className = 'flower ' + (isOwned || !currentUser ? 'owned' : 'not-owned');
+    const imgName = f.image || `${f.category}-${f.name}`;
+    let imgUrl = imgName.startsWith("http") ? imgName : GITHUB_RAW_BASE + encodeURI(`images/${f.category}/${imgName}.jpg`);
+    div.innerHTML = `<div class="score-badge">${f.score}分</div><img src="${imgUrl}"><div class="flower-name">${f.name}</div>`;
+    return div;
+}
+
+function showDetail(f) {
+    document.getElementById('detailTitle').innerText = f.name;
+    document.getElementById('ownerListText').innerHTML = `<b>👑 擁有人名單：</b><br>${f.owners.length > 0 ? f.owners.join('、') : '目前無人擁有'}`;
+    openModal('detailModal');
+}
+
+// 核心更新：自動計算最長姓名寬度並對齊
 function renderCompTable() {
-    const tbody = document.getElementById('compTableBody'); tbody.innerHTML = '';
+    const container = document.getElementById('compTableContainer'); container.innerHTML = '';
     const map = {};
-    db.forEach(f => { f.competers.forEach(n => { if(!map[n]) map[n]=[]; map[n].push(f.name); }); });
-    const keys = Object.keys(map);
-    if(keys.length === 0) tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; padding:20px; color:#999;">目前無人報名</td></tr>';
-    else keys.forEach(u => { const tr = document.createElement('tr'); tr.innerHTML = `<td style="padding:10px; border:1px solid #ddd; background:#fff;"><b>${u}</b></td><td style="padding:10px; border:1px solid #ddd; background:#fff;">${map[u].join('、')}</td>`; tbody.appendChild(tr); });
+    db.forEach(f => f.competers.forEach(n => { if(!map[n]) map[n]=[]; map[n].push(f.name); }));
+    const entries = Object.entries(map);
+    if(entries.length === 0) { container.innerHTML = "<p style='padding:20px; text-align:center;'>尚無報名</p>"; return; }
+    
+    entries.forEach(([u, fList]) => {
+        const row = document.createElement('div'); row.className = 'comp-row';
+        row.innerHTML = `<div class="comp-name">${u}</div><div class="comp-flowers">${fList.join('、')}</div>`;
+        container.appendChild(row);
+    });
+
+    // 動態對齊寬度邏輯
+    setTimeout(() => {
+        const nameEls = container.querySelectorAll('.comp-name');
+        let maxW = 0;
+        nameEls.forEach(el => {
+            el.style.width = 'auto'; // 先重置
+            if(el.offsetWidth > maxW) maxW = el.offsetWidth;
+        });
+        nameEls.forEach(el => { el.style.width = (maxW + 5) + 'px'; });
+    }, 10);
+
     document.getElementById('compJoinBtn').style.display = currentUser ? 'block' : 'none';
 }
 
 function openCompModal() {
     const list = document.getElementById('compCheckList'); list.innerHTML = '';
     db.filter(f => f.owners.includes(currentUser.displayName)).forEach(f => {
-        const item = document.createElement('div'); item.className = 'comp-select-item';
         const isComping = f.competers.includes(currentUser.displayName);
-        item.innerHTML = `<input type="checkbox" id="c_${f.name}" ${isComping?'checked':''}> <label for="c_${f.name}" class="comp-info-wrapper"><span class="comp-flower-name">${f.name}</span><span class="comp-score-tag">${f.score} pt</span></label>`;
-        list.appendChild(item);
+        list.innerHTML += `
+            <div style="padding:15px; border-bottom:1px solid #eee; display:flex; align-items:center;">
+                <input type="checkbox" id="c_${f.name}" ${isComping?'checked':''} style="width:22px; height:22px; margin-right:12px;"> 
+                <span style="flex:1; font-weight:bold;">${f.name}</span>
+                <span style="color:var(--gold); font-weight:bold; font-size:12px;">${f.score}分</span>
+            </div>`;
     });
     openModal('compModal');
 }
@@ -152,56 +291,60 @@ function saveCompSelection() {
         const chk = document.getElementById(`c_${f.name}`);
         if(chk) {
             const idx = f.competers.indexOf(currentUser.displayName);
-            if (chk.checked && idx === -1) f.competers.push(currentUser.displayName);
-            else if (!chk.checked && idx > -1) f.competers.splice(idx, 1);
+            if(chk.checked && idx === -1) f.competers.push(currentUser.displayName);
+            else if(!chk.checked && idx > -1) f.competers.splice(idx, 1);
         }
     });
-    closeModal('compModal'); document.getElementById('saveBtn').style.display = 'block'; renderCompTable();
+    closeModal('compModal'); document.getElementById('saveBtn').style.display = 'block'; render();
 }
 
 async function manualSync() {
     const btn = document.getElementById('saveBtn'); btn.innerText = "⏳ 同步中...";
-    try {
-        await Promise.all(db.map(f => fetch(API_URL, { 
-            method: "POST", mode: "no-cors", 
-            body: JSON.stringify({ type: "updateOwners", flowerName: f.name, newOwners: f.owners.join(','), newCompeters: f.competers.join(',') }) 
-        })));
-        btn.innerText = "💾 儲存成功"; setTimeout(() => btn.style.display = 'none', 1500);
-    } catch(e) { alert("儲存失敗"); }
-}
-
-function showMemberPage() {
-    document.getElementById('memberPage').style.display = 'block';
-    const list = document.getElementById('memberList'); list.innerHTML = '';
-    users.forEach(u => {
-        const btn = document.createElement('button'); btn.innerText = u.displayName; btn.className = 'filter-btn';
-        btn.onclick = () => {
-            const mFlowers = document.getElementById('memberFlowers'); mFlowers.innerHTML = '';
-            db.filter(f => f.owners.includes(u.displayName)).forEach(f => {
-                const div = document.createElement('div'); div.className = 'flower owned';
-                let imgUrl = f.image.startsWith("http") ? f.image : GITHUB_RAW_BASE + encodeURI(`images/${f.category}/${f.image||f.category+'-'+f.name}.jpg`);
-                div.innerHTML = `<div class="score-tag">${f.score}pt</div><img src="${imgUrl}"><div class="flower-name">${f.name}</div>`;
-                div.onclick = (e) => { e.stopPropagation(); alert(`🌸【${f.name}】\n持有：${f.owners.join('、')}`); };
-                mFlowers.appendChild(div);
-            });
-        };
-        list.appendChild(btn);
-    });
+    for(let f of db) { await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type: "updateOwners", flowerName: f.name, newOwners: f.owners.join(','), newCompeters: f.competers.join(',') }) }); }
+    btn.innerText = "💾 儲存成功"; setTimeout(() => btn.style.display = 'none', 1500);
 }
 
 function updateFilterBar() {
-    const cats = ["🏆 本週競賽花", "全部", ...new Set(db.map(f => f.category))];
+    const cats = ["🏆 競賽", "全部", "紅", "金", "紫", "藍"];
     const fBar = document.getElementById('filterBar'); fBar.innerHTML = '';
     cats.forEach(cat => {
-        const btn = document.createElement('button'); btn.className = 'filter-btn' + (cat === currentTab ? ' active' : '') + (cat === "🏆 本週競賽花" ? " special" : "");
-        btn.innerText = cat; btn.onclick = () => { currentTab = cat; render(); updateFilterBar(); }; fBar.appendChild(btn);
+        const btn = document.createElement('button'); btn.className = 'filter-btn' + (cat === currentTab ? ' active' : '');
+        btn.innerText = cat; btn.onclick = () => { currentTab = cat; render(); updateFilterBar(); };
+        fBar.appendChild(btn);
     });
 }
+
+function toggleCompSummary(s) { 
+    document.getElementById('compMainArea').style.display = s ? 'none' : 'block'; 
+    document.getElementById('compSummaryPage').style.display = s ? 'block' : 'none'; 
+    if(s) {
+        const box = document.getElementById('summaryFlowers'); box.innerHTML = '';
+        db.filter(f => f.competers.length > 0).forEach(f => {
+            const imgName = f.image || `${f.category}-${f.name}`;
+            let imgUrl = imgName.startsWith("http") ? imgName : GITHUB_RAW_BASE + encodeURI(`images/${f.category}/${imgName}.jpg`);
+            box.innerHTML += `<div class="sum-flower"><div class="score-badge">${f.score}分</div><img src="${imgUrl}" style="width:100%; border-radius:8px;"><b>${f.name}</b><p>${f.competers.join('、')}</p></div>`;
+        });
+    }
+}
 function hideMemberPage() { document.getElementById('memberPage').style.display = 'none'; }
+function showMemberPage() {
+    document.getElementById('memberPage').style.display = 'block';
+    const mList = document.getElementById('mList'); mList.innerHTML = '';
+    users.forEach(u => {
+        const b = document.createElement('button'); b.className = 'filter-btn'; b.innerText = u.displayName;
+        b.onclick = () => {
+            document.getElementById('memberHeader').innerText = u.displayName; mList.style.display = 'none';
+            const box = document.getElementById('memberFlowers'); box.innerHTML = '';
+            db.filter(f => f.owners.includes(u.displayName)).forEach(f => {
+                const div = createFlowerElement(f); div.onclick = () => showDetail(f); box.appendChild(div);
+            });
+        };
+        mList.appendChild(b);
+    });
+}
 function openModal(id) { document.getElementById(id).style.display = 'flex'; }
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 init();
 </script>
 </body>
 </html>
-
