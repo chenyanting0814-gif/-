@@ -3,25 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>紫色瘋人院</title>
+    <title>紫色瘋人院 - 資產管理系統</title>
     <style>
         :root { --main: #6a5acd; --bg: #f5f5f7; --success: #27ae60; --error: #e74c3c; --dark: #2c3e50; --gold: #f1c40f; }
         body { font-family: "Microsoft JhengHei", sans-serif; margin: 0; background: var(--bg); color: #333; overflow: hidden; height: 100vh; }
-        
-        /* 導覽列 */
         .admin-bar { position: fixed; top: 0; width: 100%; height: 50px; background: var(--dark); color: white; display: flex; align-items: center; padding: 0 15px; z-index: 1000; box-sizing: border-box; justify-content: space-between; }
         .nav-right { display: flex; gap: 8px; align-items: center; }
         .admin-bar button { background: var(--main); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: bold; }
-        
-        /* 主內容區 */
         .main-content { padding-top: 50px; height: 100vh; overflow-y: auto; box-sizing: border-box; display: flex; flex-direction: column; }
         .filter-bar { background: white; padding: 10px; display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 900; }
         .filter-btn { flex: 1 1 auto; min-width: 65px; max-width: 100px; padding: 8px 4px; border-radius: 8px; border: 1.5px solid #eee; background: #fff; font-size: 11px; font-weight: bold; cursor: pointer; text-align: center; }
         .filter-btn.active { background: var(--main); color: white; border-color: var(--main); }
         .filter-btn.special { border-color: var(--gold); color: #d4af37; }
         .filter-btn.special.active { background: var(--gold); color: #333; }
-
-        /* 花牆卡片 */
         #flowers { display: grid; grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); gap: 10px; padding: 10px; }
         .flower { background: white; padding: 6px; border-radius: 10px; text-align: center; border: 2.5px solid transparent; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; cursor: pointer; }
         .flower img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 6px; background: #eee; }
@@ -29,21 +23,14 @@
         .score-tag { position: absolute; top: 4px; right: 4px; background: var(--gold); color: #333; font-size: 9px; padding: 1px 5px; border-radius: 8px; font-weight: bold; z-index: 5; }
         .flower.owned { border-color: var(--main); }
         .flower.not-owned img { filter: grayscale(100%); opacity: 0.5; }
-
-        /* 彈窗樣式 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; justify-content: center; align-items: center; }
         .modal-content { background: white; padding: 20px; border-radius: 15px; width: 320px; text-align: center; box-sizing: border-box; }
-        .modal-content input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
-        .modal-content input:disabled { background: #f5f5f5; color: #999; cursor: not-allowed; }
-        
-        /* 報名選單 UI 優化 */
+        .modal-content input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         .comp-select-item { display: flex; align-items: center; padding: 12px 10px; border-bottom: 1px solid #eee; background: #fff; text-align: left; }
         .comp-select-item input[type="checkbox"] { width: 16px; height: 16px; margin: 0 12px 0 0; cursor: pointer; flex-shrink: 0; }
         .comp-info-wrapper { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; overflow: hidden; }
         .comp-flower-name { font-size: 15px; font-weight: bold; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .comp-score-tag { background: #fff8e1; color: #b8860b; border: 1px solid var(--gold); font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: bold; white-space: nowrap; flex-shrink: 0; }
-
-        /* 其他元件 */
+        .comp-score-tag { background: #fff8e1; color: #b8860b; border: 1px solid var(--gold); font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: bold; flex-shrink: 0; }
         #saveBtn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 12px 30px; background: var(--success); color: white; border: none; border-radius: 50px; font-weight: bold; z-index: 1500; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
     </style>
@@ -68,7 +55,6 @@
 <div class="main-content">
     <div class="filter-bar" id="filterBar"></div>
     <div id="flowers"></div>
-    
     <div id="competitionView" style="display:none; padding:15px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <h3 style="margin:0; font-size:16px;">🏆 本週競賽報名</h3>
@@ -82,38 +68,18 @@
 </div>
 
 <div id="loginModal" class="modal"><div class="modal-content"><h3>系統登入</h3><input type="text" id="uIn" placeholder="帳號"><input type="password" id="pIn" placeholder="密碼"><button onclick="login()" style="width:100%; padding:12px; background:var(--main); color:white; border:none; border-radius:8px; font-weight:bold;">確定</button><button onclick="closeModal('loginModal')" style="margin-top:12px; background:none; border:none; color:#888;">取消</button></div></div>
-
-<div id="accModal" class="modal">
-    <div class="modal-content">
-        <h3>修改帳號密碼</h3>
-        <p style="font-size:11px; color:var(--error); margin-bottom:10px;">帳號僅限修改一次，密碼不限次數</p>
-        <input type="text" id="editUID" placeholder="新帳號">
-        <input type="password" id="editPWD" placeholder="新密碼">
-        <button onclick="submitAccChange()" style="width:100%; padding:12px; background:var(--main); color:white; border:none; border-radius:8px; font-weight:bold;">儲存修改</button>
-        <button onclick="closeModal('accModal')" style="margin-top:12px; background:none; border:none; color:#888;">取消</button>
-    </div>
-</div>
-
-<div id="compModal" class="modal">
-    <div class="modal-content">
-        <h3 style="margin-bottom:5px;">報名競賽花</h3>
-        <p style="font-size:11px; color:#999; margin-bottom:12px;">點擊名稱或分數即可勾選</p>
-        <div id="compCheckList" style="max-height:350px; overflow-y:auto; border:1px solid #eee; border-radius:8px; margin-bottom:15px;"></div>
-        <button onclick="saveCompSelection()" style="width:100%; padding:12px; background:var(--success); color:white; border:none; border-radius:8px; font-weight:bold;">確認送出</button>
-        <button onclick="closeModal('compModal')" style="margin-top:10px; background:none; border:none; color:#888;">取消</button>
-    </div>
-</div>
+<div id="accModal" class="modal"><div class="modal-content"><h3>修改帳密</h3><input type="text" id="editUID" placeholder="新帳號"><input type="password" id="editPWD" placeholder="新密碼"><button onclick="submitAccChange()" style="width:100%; padding:12px; background:var(--main); color:white; border:none; border-radius:8px;">儲存修改</button><button onclick="closeModal('accModal')" style="margin-top:10px; background:none; border:none; color:#888;">取消</button></div></div>
+<div id="compModal" class="modal"><div class="modal-content"><h3>報名競賽</h3><div id="compCheckList" style="max-height:350px; overflow-y:auto; border:1px solid #eee; border-radius:8px; margin-bottom:15px;"></div><button onclick="saveCompSelection()" style="width:100%; padding:12px; background:var(--success); color:white; border:none; border-radius:8px;">確認送出</button><button onclick="closeModal('compModal')" style="margin-top:10px; background:none; border:none; color:#888;">取消</button></div></div>
 
 <div id="memberPage" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:2000; padding-top:60px;">
-    <button onclick="hideMemberPage()" style="position:absolute; top:12px; right:15px; width:35px; height:35px; border-radius:50%; background:#333; color:white; border:none; font-size:18px;">✕</button>
-    <div id="memberList" style="display:flex; flex-wrap:wrap; gap:8px; padding:15px; justify-content:center; background:white; border-bottom:1px solid #ddd;"></div>
+    <button onclick="hideMemberPage()" style="position:absolute; top:12px; right:15px; width:35px; height:35px; border-radius:50%; background:#333; color:white; border:none;">✕</button>
+    <div id="memberList" style="display:flex; flex-wrap:wrap; gap:8px; padding:15px; justify-content:center; background:white;"></div>
     <div id="memberFlowers" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(95px, 1fr)); gap:10px; padding:15px; overflow-y:auto; height:calc(100% - 150px);"></div>
 </div>
 
 <button onclick="manualSync()" id="saveBtn">💾 儲存修改內容</button>
 
 <script>
-// --- 重要：替換為你的 GAS 網址 ---
 const API_URL = "https://script.google.com/macros/s/AKfycbyT64IkZksYdYkLHFXiZu22AIV5yew5q3JuZJuRrnTp8_Iy9vVl7Jh9efFfH2G3voT8/exec"; 
 const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/chenyanting0814-gif/-/main/";
 
@@ -123,13 +89,7 @@ async function init() {
     try {
         const res = await fetch(API_URL);
         const data = await res.json();
-        users = data.members.slice(1).map(row => ({ 
-            loginID: row[0]?.toString().trim()||"", 
-            pwd: row[1]?.toString().trim()||"", 
-            displayName: row[2]?.toString().trim()||row[0],
-            isAccChanged: row[3] == 1 
-        })).filter(u => u.displayName !== "");
-        
+        users = data.members.slice(1).map(row => ({ loginID: row[0]?.toString().trim()||"", pwd: row[1]?.toString().trim()||"", displayName: row[2]?.toString().trim()||row[0], isAccChanged: row[3] == 1 }));
         db = data.flowers.slice(1).map(row => ({
             name: row[0]?.toString().trim() || "",
             category: row[1]?.toString().trim() || "未分類",
@@ -138,56 +98,20 @@ async function init() {
             score: row[4] || 0,
             competers: row[5]?.toString().split(',').map(o=>o.trim()).filter(o=>o!=='') || []
         }));
-        updateFilterBar();
-        document.getElementById('loading').style.display = 'none';
-        render();
-    } catch (e) { document.getElementById('loading').innerHTML = "<div style='color:red;'>❌ 連線失敗<br><small>請確認部署網址與權限</small></div>"; }
+        updateFilterBar(); document.getElementById('loading').style.display = 'none'; render();
+    } catch (e) { document.getElementById('loading').innerHTML = "❌ 連線失敗"; }
 }
 
 function login() {
-    const u = document.getElementById('uIn').value.trim();
-    const p = document.getElementById('pIn').value.trim();
+    const u = document.getElementById('uIn').value.trim(), p = document.getElementById('pIn').value.trim();
     const found = users.find(x => x.loginID === u && x.pwd === p);
-    if(found) { 
-        currentUser = found; closeModal('loginModal'); 
-        document.getElementById('loginBtn').style.display = 'none';
-        document.getElementById('userArea').style.display = 'flex';
-        document.getElementById('userGreet').innerText = found.displayName;
-        render(); 
-    } else alert("帳密錯誤");
-}
-
-function openAccModal() {
-    const uidIn = document.getElementById('editUID');
-    uidIn.value = currentUser.loginID;
-    document.getElementById('editPWD').value = currentUser.pwd;
-    uidIn.disabled = currentUser.isAccChanged;
-    openModal('accModal');
-}
-
-async function submitAccChange() {
-    const newUID = document.getElementById('editUID').value.trim();
-    const newPWD = document.getElementById('editPWD').value.trim();
-    if (!newUID || !newPWD) return alert("請完整填寫");
-    document.getElementById('loading').style.display = 'flex';
-    try {
-        if (!currentUser.isAccChanged && newUID !== currentUser.loginID) {
-            await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type: "finalChangeUsername", oldName: currentUser.loginID, newValue: newUID }) });
-            currentUser.loginID = newUID; 
-        }
-        if (newPWD !== currentUser.pwd) {
-            await fetch(API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ type: "changePassword", oldName: currentUser.loginID, newValue: newPWD }) });
-        }
-        alert("修改成功！請重新登入"); location.reload();
-    } catch (e) { alert("更新失敗"); document.getElementById('loading').style.display = 'none'; }
+    if(found) { currentUser = found; closeModal('loginModal'); document.getElementById('loginBtn').style.display = 'none'; document.getElementById('userArea').style.display = 'flex'; document.getElementById('userGreet').innerText = found.displayName; render(); } else alert("帳密錯誤");
 }
 
 function render() {
-    const box = document.getElementById('flowers');
-    const compView = document.getElementById('competitionView');
-    if (currentTab === "🏆 本週競賽花") {
-        box.style.display = 'none'; compView.style.display = 'block'; renderCompTable();
-    } else {
+    const box = document.getElementById('flowers'), compView = document.getElementById('competitionView');
+    if (currentTab === "🏆 本週競賽花") { box.style.display = 'none'; compView.style.display = 'block'; renderCompTable(); }
+    else {
         box.style.display = 'grid'; compView.style.display = 'none'; box.innerHTML = '';
         const filtered = currentTab === "全部" ? db : db.filter(f => f.category === currentTab);
         filtered.forEach(f => {
@@ -196,15 +120,7 @@ function render() {
             div.className = 'flower ' + (isOwned || !currentUser ? 'owned' : 'not-owned');
             let imgUrl = f.image.startsWith("http") ? f.image : GITHUB_RAW_BASE + encodeURI(`images/${f.category}/${f.image||f.category+'-'+f.name}.jpg`);
             div.innerHTML = `<div class="score-tag">${f.score}pt</div><img src="${imgUrl}"><div class="flower-name">${f.name}</div>`;
-            div.onclick = () => {
-                if (!currentUser) alert(`🌸 持有：${f.owners.join('、')||'無'}`);
-                else { 
-                    const idx = f.owners.indexOf(currentUser.displayName); 
-                    if (idx > -1) f.owners.splice(idx, 1); else f.owners.push(currentUser.displayName); 
-                    document.getElementById('saveBtn').style.display = 'block'; 
-                    render(); 
-                }
-            };
+            div.onclick = () => { if (!currentUser) alert(`🌸 持有：${f.owners.join('、')||'無'}`); else { const idx = f.owners.indexOf(currentUser.displayName); if (idx > -1) f.owners.splice(idx, 1); else f.owners.push(currentUser.displayName); document.getElementById('saveBtn').style.display = 'block'; render(); } };
             box.appendChild(div);
         });
     }
@@ -213,38 +129,32 @@ function render() {
 function renderCompTable() {
     const tbody = document.getElementById('compTableBody'); tbody.innerHTML = '';
     const map = {};
-    db.forEach(f => f.competers.forEach(n => { if(!map[n]) map[n]=[]; map[n].push(f.name); }));
-    Object.keys(map).forEach(u => { 
-        const tr = document.createElement('tr'); 
-        tr.innerHTML = `<td style="padding:10px; border:1px solid #ddd;"><b>${u}</b></td><td style="padding:10px; border:1px solid #ddd;">${map[u].join('、')}</td>`; 
-        tbody.appendChild(tr); 
-    });
+    db.forEach(f => { f.competers.forEach(n => { if(!map[n]) map[n]=[]; map[n].push(f.name); }); });
+    const keys = Object.keys(map);
+    if(keys.length === 0) tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; padding:20px; color:#999;">目前無人報名</td></tr>';
+    else keys.forEach(u => { const tr = document.createElement('tr'); tr.innerHTML = `<td style="padding:10px; border:1px solid #ddd; background:#fff;"><b>${u}</b></td><td style="padding:10px; border:1px solid #ddd; background:#fff;">${map[u].join('、')}</td>`; tbody.appendChild(tr); });
     document.getElementById('compJoinBtn').style.display = currentUser ? 'block' : 'none';
 }
 
 function openCompModal() {
     const list = document.getElementById('compCheckList'); list.innerHTML = '';
-    const myOwned = db.filter(f => f.owners.includes(currentUser.displayName));
-    myOwned.forEach(f => {
+    db.filter(f => f.owners.includes(currentUser.displayName)).forEach(f => {
         const item = document.createElement('div'); item.className = 'comp-select-item';
         const isComping = f.competers.includes(currentUser.displayName);
-        item.innerHTML = `
-            <input type="checkbox" id="c_${f.name}" ${isComping?'checked':''}> 
-            <label for="c_${f.name}" class="comp-info-wrapper">
-                <span class="comp-flower-name">${f.name}</span>
-                <span class="comp-score-tag">${f.score} pt</span>
-            </label>`;
+        item.innerHTML = `<input type="checkbox" id="c_${f.name}" ${isComping?'checked':''}> <label for="c_${f.name}" class="comp-info-wrapper"><span class="comp-flower-name">${f.name}</span><span class="comp-score-tag">${f.score} pt</span></label>`;
         list.appendChild(item);
     });
     openModal('compModal');
 }
 
 function saveCompSelection() {
-    db.filter(f => f.owners.includes(currentUser.displayName)).forEach(f => {
-        const checked = document.getElementById(`c_${f.name}`).checked;
-        const idx = f.competers.indexOf(currentUser.displayName);
-        if (checked && idx === -1) f.competers.push(currentUser.displayName);
-        else if (!checked && idx > -1) f.competers.splice(idx, 1);
+    db.forEach(f => {
+        const chk = document.getElementById(`c_${f.name}`);
+        if(chk) {
+            const idx = f.competers.indexOf(currentUser.displayName);
+            if (chk.checked && idx === -1) f.competers.push(currentUser.displayName);
+            else if (!chk.checked && idx > -1) f.competers.splice(idx, 1);
+        }
     });
     closeModal('compModal'); document.getElementById('saveBtn').style.display = 'block'; renderCompTable();
 }
@@ -271,10 +181,7 @@ function showMemberPage() {
                 const div = document.createElement('div'); div.className = 'flower owned';
                 let imgUrl = f.image.startsWith("http") ? f.image : GITHUB_RAW_BASE + encodeURI(`images/${f.category}/${f.image||f.category+'-'+f.name}.jpg`);
                 div.innerHTML = `<div class="score-tag">${f.score}pt</div><img src="${imgUrl}"><div class="flower-name">${f.name}</div>`;
-                div.onclick = (e) => {
-                    e.stopPropagation();
-                    alert(`🌸【${f.name}】\n目前持有人：\n${f.owners.join('、') || '暫無人持有'}`);
-                };
+                div.onclick = (e) => { e.stopPropagation(); alert(`🌸【${f.name}】\n持有：${f.owners.join('、')}`); };
                 mFlowers.appendChild(div);
             });
         };
