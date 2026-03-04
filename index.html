@@ -229,13 +229,14 @@ users = memberData.slice(1).map(row => ({
 })).filter(u => u.loginID);
 
 
-        db = flowerData.slice(1).map(row => ({ 
+db = flowerData.slice(1).map(row => ({ 
             name: row[0]?.toString().trim() || "未命名", 
             category: row[1] || "未分類", 
             image: row[2] || "", 
-            owners: row[3] ? row[3].toString().split(',').filter(o=>o.trim()) : [], 
+            // 🔴 修改：增加 .map(o => o.trim()) 確保抓取名字時不會被空格干擾
+            owners: row[3] ? row[3].toString().split(',').map(o => o.trim()).filter(o => o) : [], 
             score: row[4] || 0,
-            competers: row[5] ? row[5].toString().split(',').filter(o=>o.trim()) : [] 
+            competers: row[5] ? row[5].toString().split(',').map(o => o.trim()).filter(o => o) : [] 
         })).filter(f => f.name !== "未命名");
 
         updateFilterBar(); 
@@ -387,11 +388,18 @@ function render() {
 
 function showDetail(f) {
     document.getElementById('detailTitle').innerText = f.name;
-    const ownerList = f.owners.length > 0 ? f.owners.join('、') : '無';
+    
+    // 🔴 修改：確保 owners 陣列中的每個名字都能顯示，並用「、」隔開
+    const ownerList = (f.owners && f.owners.length > 0) 
+        ? f.owners.join(' 、 ') 
+        : '目前尚無擁有人';
+
     document.getElementById('ownerListText').innerHTML = `
-        <div style="text-align:left; line-height:1.6;">
-            <b>👑 擁有人：</b><br>${ownerList}
+        <div style="text-align:left; line-height:1.6; padding: 10px;">
+            <b style="color:var(--main); font-size:14px;">👑 擁有人名單：</b><br>
+            <span style="font-size:13px; color:#333;">${ownerList}</span>
         </div>`;
+        
     openModal('detailModal');
 }
 
@@ -804,4 +812,3 @@ function checkDuplicateFlower(val) {
 </script>
 </body>
 </html>
-
