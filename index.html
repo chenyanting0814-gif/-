@@ -85,12 +85,10 @@
 
 <div class="admin-card">
     <h3>🌸 新增花朵</h3>
-    
     <div id="duplicateWarn" class="duplicate-warning">⚠️ 此花名已存在於資料庫！</div>
     
     <div style="position: relative; margin-bottom: 10px;">
         <input type="text" id="newFName" placeholder="請輸入花朵名稱" oninput="checkDuplicateFlower(this.value)">
-        
         <div id="flowerSuggest" style="color: #e74c3c; font-size: 12px; font-weight: bold; margin-top: 4px; text-align: left; display: none;"></div>
     </div>
 
@@ -101,6 +99,7 @@
         <option value="紫">🟣 紫</option>
         <option value="藍">🔵 藍</option>
     </select>
+    
     <button id="addFlowerBtn" onclick="submitNewFlower()" style="width:100%; padding:10px; background:var(--success); color:white; border:none; border-radius:4px; font-weight:bold;">發布花朵</button>
     <div id="msgFlower" style="font-size:12px; margin-top:5px; color:var(--success);"></div>
 </div>
@@ -201,7 +200,7 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbyT64IkZksYdYkLHFXiZu22AIV5yew5q3JuZJuRrnTp8_Iy9vVl7Jh9efFfH2G3voT8/exec"; 
 const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/chenyanting0814-gif/-/main/";
 
-const ADMIN_LIST = ['安太睡❥', '帥底迪', '酥巴拉si ❥']; 
+const ADMIN_LIST = ['安太睡', '帥底迪', '酥巴拉si ❥']; 
 
 let db = [], users = [], currentUser = null, currentTab = "全部";
 
@@ -229,15 +228,24 @@ users = memberData.slice(1).map(row => ({
 })).filter(u => u.loginID);
 
 
-db = flowerData.slice(1).map(row => ({ 
-            name: row[0]?.toString().trim() || "未命名", 
-            category: row[1] || "未分類", 
-            image: row[2] || "", 
-            // 🔴 修改：增加 .map(o => o.trim()) 確保抓取名字時不會被空格干擾
-            owners: row[3] ? row[3].toString().split(',').map(o => o.trim()).filter(o => o) : [], 
-            score: row[4] || 0,
-            competers: row[5] ? row[5].toString().split(',').map(o => o.trim()).filter(o => o) : [] 
-        })).filter(f => f.name !== "未命名");
+/* --- 修改 init 函式內的 db 資料處理邏輯 --- */
+db = flowerData.slice(1).map(row => {
+    const name = row[0]?.toString().trim() || "未命名";
+    const category = row[1] || "未分類";
+    
+    // 🔴 關鍵修改：若 row[2] (IMAGE欄) 為空，則自動產生「分類-花名」作為圖片名稱
+    const rawImage = row[2] ? row[2].toString().trim() : "";
+    const finalImage = rawImage !== "" ? rawImage : `${category}-${name}`;
+    
+    return {
+        name: name,
+        category: category,
+        image: finalImage, // 存入處理好的名稱
+        owners: row[3] ? row[3].toString().split(',').map(o => o.trim()).filter(o => o) : [], 
+        score: row[4] || 0,
+        competers: row[5] ? row[5].toString().split(',').map(o => o.trim()).filter(o => o) : [] 
+    };
+}).filter(f => f.name !== "未命名");
 
         updateFilterBar(); 
         render(); 
@@ -247,6 +255,8 @@ db = flowerData.slice(1).map(row => ({
         document.getElementById('loading').innerHTML = "❌ 連線失敗或資料格式錯誤"; 
     }
 }
+
+// ... (前略)
 
 /* --- 個人設定修改 --- */
 function openProfileModal() {
@@ -260,12 +270,12 @@ function openProfileModal() {
     // 填入目前資料
     idInput.value = currentUser.loginID;
     nameInput.value = currentUser.displayName;
-    pwdInput.value = ""; // 密碼欄位預設清空讓使用者輸入新密碼
+    pwdInput.value = ""; 
 
-    // 🔴 檢查權限：usedFlag 為 1 代表在試算表中已被標記為「改過一次」
+    // <span style="color:red;">🔴 補回檢查權限：usedFlag 為 1 代表在試算表中已被標記為「改過一次」</span>
     if (currentUser.usedFlag === 1) {
         idInput.disabled = true;
-        idInput.style.backgroundColor = "#f0f0f0"; // 變灰色
+        idInput.style.backgroundColor = "#f0f0f0"; 
         idInput.style.color = "#888";
         idHint.innerText = "(⚠️ 帳號 ID 已修改過，不可再改)";
         idHint.style.color = "red";
@@ -279,7 +289,7 @@ function openProfileModal() {
 
     openModal('profileModal');
 }
-// 2. 儲存修改：將資料 POST 到 Google Apps Script
+
 async function saveProfile() {
     const newID = document.getElementById('profID').value.trim();
     const newName = document.getElementById('profName').value.trim();
@@ -287,14 +297,17 @@ async function saveProfile() {
 
     if (!newID || !newName) return alert("帳號與顯示名字不可為空");
     
-    // 如果內容完全沒變，直接關閉
+    // <span style="color:red;">🔴 新增：在儲存時再次驗證，防止繞過 UI 修改已鎖定的帳號</span>
+    if (newID !== currentUser.loginID && currentUser.usedFlag === 1) {
+        return alert("❌ 帳號 ID 已修改過，不可再次變更！");
+    }
+
     if (newID === currentUser.loginID && newName === currentUser.displayName && !newPwd) {
         return closeModal('profileModal');
     }
 
     if (!confirm("確定要修改資料嗎？\n(若修改帳號 ID，系統將自動登出並重新整理)")) return;
 
-    // 取得按鈕元件以顯示讀取中狀態
     const btn = event.target;
     const originalText = btn.innerText;
     btn.innerText = "⏳ 儲存中...";
@@ -303,10 +316,10 @@ async function saveProfile() {
     try {
         const payload = {
             type: "updateMember",
-            oldAcc: currentUser.loginID, // 用舊帳號當作 Key 去後端尋找資料列
+            oldAcc: currentUser.loginID, 
             newAcc: newID,
             newName: newName,
-            newPwd: newPwd || currentUser.pwd // 若沒填新密碼則沿用舊的
+            newPwd: newPwd || currentUser.pwd
         };
 
         const res = await fetch(API_URL, {
@@ -318,16 +331,13 @@ async function saveProfile() {
         if (result.includes("Success")) {
             alert("✅ 修改成功！");
             
-            // 🔴 如果帳號 ID 變了，強制重新整理頁面
             if (newID !== currentUser.loginID) {
                 location.reload();
             } else {
-                // 僅改名或密碼，動態更新 UI
                 currentUser.displayName = newName;
                 currentUser.pwd = newPwd || currentUser.pwd;
                 document.getElementById('userGreet').innerText = newName;
                 
-                // 重新抓取資料以確保同步
                 await init(true); 
                 closeModal('profileModal');
             }
@@ -515,13 +525,15 @@ function createFlowerElement(f) {
     // 如果沒登入，全部顯示彩色；如果已登入，沒擁有的變灰色
     div.className = 'flower ' + (!currentUser || isOwned ? 'owned' : 'not-owned');
     
-    const imgName = f.image || `${f.category}-${f.name}`;
+    // 🔴 修改邏輯：優先使用試算表中的 f.image，若為空則自動組合成「分類-花名」
+    const imgName = f.image ? f.image.toString().trim() : `${f.category}-${f.name}`;
+    
+    // 組成網址
     let imgUrl = imgName.startsWith("http") ? imgName : GITHUB_RAW_BASE + encodeURI(`images/${f.category}/${imgName}.jpg`);
     
     div.innerHTML = `<div class="score-badge">${f.score}分</div><img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/100?text=無圖'"><div class="flower-name">${f.name}</div>`;
     return div;
 }
-
 // 記得在頁面最後面呼叫 init
 init();
 function openCompModal() {
@@ -607,13 +619,27 @@ async function submitNewFlower() {
     const cat = document.getElementById('newFCat').value;
     const btn = document.getElementById('addFlowerBtn');
     const msg = document.getElementById('msgFlower');
+    
     if(!name || !cat) return alert("⚠️ 請填寫花名並選擇分類！");
+    
+    // <span style="color:red;">🔴 修改：將圖片預設欄位設為空，確保系統會自動組合「分類-花名」</span>
+    const defaultImgName = ""; 
+    
     btn.innerText = "⏳ 同步中...";
     btn.disabled = true;
     try {
-        const response = await fetch(API_URL, { method: "POST", body: JSON.stringify({ type: "addFlower", flowerName: name, category: cat, image: "", score: 0 }) });
+        const response = await fetch(API_URL, { 
+            method: "POST", 
+            body: JSON.stringify({ 
+                type: "addFlower", 
+                flowerName: name, 
+                category: cat, 
+                image: defaultImgName, 
+                score: 0 
+            }) 
+        });
         if ((await response.text()).includes("Success")) {
-            msg.innerText = "✅ 已發布新花朵！";
+            msg.innerText = "✅ 已發布！圖片請上傳至 GitHub 路徑：images/" + cat + "/" + cat + "-" + name + ".jpg";
             await init(true);
             document.getElementById('newFName').value = "";
         }
