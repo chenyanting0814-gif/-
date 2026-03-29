@@ -316,9 +316,21 @@ db = flowerData.slice(1).map(row => {
         name: name,
         category: category,
         image: finalImage, // 存入處理好的名稱
-        owners: row[3] ? row[3].toString().split(',').map(o => o.trim()).filter(o => o) : [], 
-        score: row[4] || 0,
-        competers: row[5] ? row[5].toString().split(',').map(o => o.trim()).filter(o => o) : [] 
+owners: row[3]
+  ? row[3].toString()
+      .split(',')
+      .map(o => o.trim())
+      .filter(o => o && users.some(u => u.displayName === o))
+  : [],
+
+score: row[4] || 0,
+
+competers: row[5]
+  ? row[5].toString()
+      .split(',')
+      .map(o => o.trim())
+      .filter(o => o && users.some(u => u.displayName === o))
+  : []
     };
 }).filter(f => f.name !== "未命名");
 
@@ -608,7 +620,8 @@ function createFlowerElement(f) {
             <img src="${imgUrl}" 
                  onerror="this.style.display='none'; this.previousElementSibling.style.display='block';">
         </div>
-        <div class="flower-name">${f.name}</div>`;
+        <div class="flower-name">${f.name}</div>
+<div style="font-size:10px;color:#888">👑 ${f.owners.length}人</div>`;
     return div;
 }
 // 記得在頁面最後面呼叫 init
@@ -667,11 +680,21 @@ function showMemberPage() {
     
     mList.innerHTML = '';
     
-    users.forEach(u => {
-        const myFlowers = db.filter(f => f.owners.includes(u.displayName));
-        const count = myFlowers.length;
-        
-        const row = document.createElement('div');
+const sortedUsers = [...users].sort((a,b)=>{
+
+    const aCount = db.filter(f => f.owners.includes(a.displayName)).length
+    const bCount = db.filter(f => f.owners.includes(b.displayName)).length
+
+    return bCount - aCount
+
+})
+
+sortedUsers.forEach(u => {
+
+    const myFlowers = db.filter(f => f.owners.includes(u.displayName));
+    const count = myFlowers.length;
+
+    const row = document.createElement('div');
         row.className = 'member-item';
         row.innerHTML = `
             <span class="member-name" style="font-weight:bold;">${u.displayName}</span>
@@ -795,11 +818,51 @@ async function submitNewMember() {
 }
 
 async function deleteMember(loginID) {
-    if (!confirm(`⚠️ 確定要刪除帳號 [${loginID}] 嗎？`)) return;
+
+    const user = users.find(u => u.loginID === loginID);
+    if (!user) return;
+
+    const name = user.displayName;
+
+    if (!confirm(`⚠️ 確定要刪除帳號 [${loginID}] 嗎？\n\n花牆與競賽資料也會同步清除`)) return;
+
     try {
-        const resp = await fetch(API_URL, { method: "POST", body: JSON.stringify({ type: "deleteMember", loginID: loginID }) });
-        if ((await resp.text()).includes("Success")) { await init(true); viewAdminData('users'); }
-    } catch (e) { alert("刪除失敗"); }
+
+        const resp = await fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                type: "deleteMember",
+                loginID: loginID
+            })
+        });
+
+        const result = await resp.text();
+
+        if (result.includes("Success")) {
+
+            // 🌸 清理花牆 owners
+            db.forEach(f => {
+                const o = f.owners.indexOf(name);
+                if (o > -1) f.owners.splice(o, 1);
+
+                const c = f.competers.indexOf(name);
+                if (c > -1) f.competers.splice(c, 1);
+            });
+
+            // 同步資料庫
+            await manualSync();
+
+            await init(true);
+
+            viewAdminData('users');
+
+        } else {
+            alert("刪除失敗：" + result);
+        }
+
+    } catch (e) {
+        alert("刪除失敗");
+    }
 }
 
 async function updateScore(fName, inputId) {
