@@ -290,55 +290,39 @@ async function init(silent = false) {
             return;
         }
 
-        // 🔴 修改：增加空值保護，確保 slice 不會出錯
         const memberData = data.members || [];
         const flowerData = data.flowers || [];
 
-users = memberData.slice(1).map(row => ({ 
-    loginID: row[0]?.toString().trim(), 
-    pwd: row[1]?.toString().trim(), 
-    displayName: row[2]?.toString().trim() || row[0],
-    // 🔴 關鍵新增：讀取資料表第四欄，判斷是否改過帳號
-    usedFlag: parseInt(row[3]) || 0 
-})).filter(u => u.loginID);
+        users = memberData.slice(1).map(row => ({ 
+            loginID: row[0]?.toString().trim(), 
+            pwd: row[1]?.toString().trim(), 
+            displayName: row[2]?.toString().trim() || row[0],
+            usedFlag: parseInt(row[3]) || 0 
+        })).filter(u => u.loginID);
 
-
-/* --- 修改 init 函式內的 db 資料處理邏輯 --- */
-db = flowerData.slice(1).map(row => {
-    const name = row[0]?.toString().trim() || "未命名";
-    const category = row[1] || "未分類";
-    
-    // 🔴 關鍵修改：若 row[2] (IMAGE欄) 為空，則自動產生「分類-花名」作為圖片名稱
-    const rawImage = row[2] ? row[2].toString().trim() : "";
-    const finalImage = rawImage !== "" ? rawImage : `${category}-${name}`;
-    
-    return {
-        name: name,
-        category: category,
-        image: finalImage, // 存入處理好的名稱
-owners: row[3]
-  ? row[3].toString()
-      .split(',')
-      .map(o => o.trim())
-      .filter(o => o && users.some(u => u.displayName === o))
-  : [],
-
-score: row[4] || 0,
-
-competers: row[5]
-  ? row[5].toString()
-      .split(',')
-      .map(o => o.trim())
-      .filter(o => o && users.some(u => u.displayName === o))
-  : []
-    };
-}).filter(f => f.name !== "未命名");
+        db = flowerData.slice(1).map(row => {
+            const name = row[0]?.toString().trim() || "未命名";
+            const category = row[1] || "未分類";
+            const rawImage = row[2] ? row[2].toString().trim() : "";
+            const finalImage = rawImage !== "" ? rawImage : `${category}-${name}`;
+            
+            return {
+                name: name,
+                category: category,
+                image: finalImage,
+                owners: row[3] ? row[3].toString().split(',').map(o => o.trim()).filter(o => o && users.some(u => u.displayName === o)) : [],
+                score: row[4] || 0,
+                competers: row[5] ? row[5].toString().split(',').map(o => o.trim()).filter(o => o && users.some(u => u.displayName === o)) : [],
+                // <b style="color:red;">新增：從試算表讀取時間戳記 (假設在第 7 欄，索引 6)</b>
+                timestamp: row[6] ? new Date(row[6]).getTime() : 0 
+            };
+        }).filter(f => f.name !== "未命名");
 
         updateFilterBar(); 
         render(); 
         document.getElementById('loading').style.display = 'none';
     } catch (e) { 
-        console.error(e); // 🔴 修改：在控制台印出錯誤方便檢查
+        console.error(e);
         document.getElementById('loading').innerHTML = "❌ 連線失敗或資料格式錯誤"; 
     }
 }
@@ -455,20 +439,34 @@ function render() {
         compView.style.display = 'none';
         document.getElementById('mainSearchBox').style.display = 'block';
         
-        // --- 排序邏輯：0分置頂，其餘由大到小 ---
-        const filteredAndSorted = db.filter(f => {
+        // --- <b style="color:red;">核心排序邏輯修改</b> ---
+        // 1. 先篩選
+        let filtered = db.filter(f => {
             const matchesTab = (currentTab === "全部" || f.category === currentTab);
             const matchesSearch = f.name.toLowerCase().includes(searchVal);
             return matchesTab && matchesSearch;
-        }).sort((a, b) => {
-            const scA = parseInt(a.score) || 0;
-            const scB = parseInt(b.score) || 0;
-            if (scA === 0 && scB !== 0) return -1;
-            if (scA !== 0 && scB === 0) return 1;
-            return scB - scA;
         });
 
-        filteredAndSorted.forEach(f => {
+        let finalDisplay = [];
+
+        if (currentTab === "全部" && searchVal === "") {
+            // <b style="color:red;">規則：前 10 朵按時間(新到舊)，後面按分類排序</b>
+            // 先按時間排序所有花
+            const timeSorted = [...filtered].sort((a, b) => b.timestamp - a.timestamp);
+            const top10 = timeSorted.slice(0, 10);
+            const others = timeSorted.slice(10);
+
+            // 剩餘的花按分類排序 (紅 -> 金 -> 紫 -> 藍)
+            const catOrder = { "紅": 1, "金": 2, "紫": 3, "藍": 4 };
+            others.sort((a, b) => (catOrder[a.category] || 99) - (catOrder[b.category] || 99));
+
+            finalDisplay = [...top10, ...others];
+        } else {
+            // 分類頁面或搜尋時，維持原本的分數排序或預設排序
+            finalDisplay = filtered.sort((a, b) => (parseInt(b.score) || 0) - (parseInt(a.score) || 0));
+        }
+
+        finalDisplay.forEach(f => {
             const el = createFlowerElement(f);
             el.onclick = () => {
                 if (currentUser) {
@@ -484,7 +482,6 @@ function render() {
         });
     }
 }
-
 function showDetail(f) {
     document.getElementById('detailTitle').innerText = f.name;
     
@@ -731,49 +728,64 @@ function hideMemberPage() {
 function hideMemberPage() { document.getElementById('memberPage').style.display = 'none'; }
 function openModal(id) { document.getElementById(id).style.display = 'flex'; }
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-// 管理功能輔助函式
-async function submitNewFlower() {
-    const name = document.getElementById('newFName').value.trim();
-    const cat = document.getElementById('newFCat').value;
-    const btn = document.getElementById('addFlowerBtn');
-    const msg = document.getElementById('msgFlower');
+function render() {
+    const box = document.getElementById('flowers');
+    const compView = document.getElementById('competitionView');
+    const searchVal = document.getElementById('flowerSearch').value.toLowerCase();
     
-    if(!name || !cat) return alert("⚠️ 請填寫花名並選擇分類！");
+    box.innerHTML = '';
     
-    // <b style="color:red;">【修改重點：自動組合分類與花名】</b>
-    // 格式為：分類-花名 (例如：紅-玫瑰)
-    const autoImgName = `${cat}-${name}`; 
-    
-    btn.innerText = "⏳ 同步中...";
-    btn.disabled = true;
-    try {
-        const response = await fetch(API_URL, { 
-            method: "POST", 
-            body: JSON.stringify({ 
-                type: "addFlower", 
-                flowerName: name, 
-                category: cat, 
-                image: autoImgName, // <b style="color:red;">這裡帶入自動產生的名稱</b>
-                score: 0 
-            }) 
-        });
+    if (currentTab === "🏆 競賽花") {
+        box.style.display = 'none';
+        compView.style.display = 'block';
+        document.getElementById('mainSearchBox').style.display = 'none';
+        renderCompTable();
+    } else {
+        box.style.display = 'grid';
+        compView.style.display = 'none';
+        document.getElementById('mainSearchBox').style.display = 'block';
         
-        const result = await response.text();
-        if (result.includes("Success")) {
-            // <b style="color:red;">提示文字也同步更新，方便管理員知道要上傳什麼檔名</b>
-            msg.innerText = `✅ 已發布！圖片請上傳至 GitHub：images/${cat}/${autoImgName}.jpg`;
-            await init(true);
-            document.getElementById('newFName').value = "";
+        // --- <b style="color:red;">核心排序邏輯修改</b> ---
+        // 1. 先篩選
+        let filtered = db.filter(f => {
+            const matchesTab = (currentTab === "全部" || f.category === currentTab);
+            const matchesSearch = f.name.toLowerCase().includes(searchVal);
+            return matchesTab && matchesSearch;
+        });
+
+        let finalDisplay = [];
+
+        if (currentTab === "全部" && searchVal === "") {
+            // <b style="color:red;">規則：前 10 朵按時間(新到舊)，後面按分類排序</b>
+            // 先按時間排序所有花
+            const timeSorted = [...filtered].sort((a, b) => b.timestamp - a.timestamp);
+            const top10 = timeSorted.slice(0, 10);
+            const others = timeSorted.slice(10);
+
+            // 剩餘的花按分類排序 (紅 -> 金 -> 紫 -> 藍)
+            const catOrder = { "紅": 1, "金": 2, "紫": 3, "藍": 4 };
+            others.sort((a, b) => (catOrder[a.category] || 99) - (catOrder[b.category] || 99));
+
+            finalDisplay = [...top10, ...others];
         } else {
-            alert("❌ 失敗：" + result);
+            // 分類頁面或搜尋時，維持原本的分數排序或預設排序
+            finalDisplay = filtered.sort((a, b) => (parseInt(b.score) || 0) - (parseInt(a.score) || 0));
         }
-    } catch (e) { 
-        alert("❌ 同步失敗"); 
-    }
-    finally { 
-        btn.innerText = "發布花朵"; 
-        btn.disabled = false; 
+
+        finalDisplay.forEach(f => {
+            const el = createFlowerElement(f);
+            el.onclick = () => {
+                if (currentUser) {
+                    const myName = currentUser.displayName;
+                    const idx = f.owners.indexOf(myName);
+                    if (idx > -1) f.owners.splice(idx, 1);
+                    else f.owners.push(myName);
+                    document.getElementById('saveBtn').style.display = 'block';
+                    render();
+                } else showDetail(f);
+            };
+            box.appendChild(el);
+        });
     }
 }
 async function submitNewMember() {
@@ -838,25 +850,30 @@ async function deleteMember(loginID) {
 
         const result = await resp.text();
 
-        if (result.includes("Success")) {
+if (result.includes("Success")) {
 
-            // 🌸 清理花牆 owners
-            db.forEach(f => {
-                const o = f.owners.indexOf(name);
-                if (o > -1) f.owners.splice(o, 1);
+    // 找到被刪的顯示名字
+    const user = users.find(u => u.loginID === loginID);
+    const name = user ? user.displayName : null;
 
-                const c = f.competers.indexOf(name);
-                if (c > -1) f.competers.splice(c, 1);
-            });
+    if(name){
 
-            // 同步資料庫
-            await manualSync();
+        // 清理 owners 與 competers
+        db.forEach(f => {
 
-            await init(true);
+            f.owners = f.owners.filter(o => o !== name);
+            f.competers = f.competers.filter(c => c !== name);
 
-            viewAdminData('users');
+        });
 
-        } else {
+        // 同步花牆資料庫
+        await manualSync();
+
+    }
+
+    await init(true);
+    viewAdminData('users');
+}else {
             alert("刪除失敗：" + result);
         }
 
@@ -1008,6 +1025,5 @@ function checkDuplicateFlower(val) {
 </script>
 </body>
 </html>
-
 
 
